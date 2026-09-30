@@ -5,7 +5,6 @@ import BotPage from "@/client/pages/Bot";
 import CompanionPage from "@/client/pages/Companion";
 import HomePage from "@/client/pages/Home";
 import LegalPage from "@/client/pages/LegalPage";
-import MapAnalyzerPage from "@/client/pages/MapAnalyzer";
 import NotFoundPage from "@/client/pages/NotFound";
 import OsuGuessrPage from "@/client/pages/OsuGuessr";
 import { routes } from "@/client/routes/paths";
@@ -28,7 +27,6 @@ export default function SeoApp() {
                         <Route path={routes.bot} element={<BotPage />} />
                         <Route path={routes.osuguessr} element={<OsuGuessrPage />} />
                         <Route path={routes.companion} element={<CompanionPage />} />
-                        <Route path={routes.mapAnalyzer} element={<MapAnalyzerPage />} />
                         <Route
                             path={routes.legal}
                             element={

@@ -171,17 +171,14 @@ export default function AccountPrivacy() {
 
                 {error && <ErrorMessage>{error}</ErrorMessage>}
 
-                <div className="mt-8 grid gap-6 min-[960px]:grid-cols-[minmax(0,1.15fr)_minmax(18rem,0.85fr)] min-[960px]:grid-rows-[auto_1fr]">
-                    <AccountPanel
-                        className="min-[960px]:row-span-2 min-[960px]:grid min-[960px]:grid-rows-subgrid min-[960px]:gap-0"
-                        aria-labelledby="identity-title"
-                    >
+                <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(18rem,0.85fr)] lg:grid-rows-[auto_1fr]">
+                    <AccountPanel className="lg:row-span-2 lg:grid lg:grid-rows-subgrid lg:gap-0" aria-labelledby="identity-title">
                         <AccountPanelHeader
                             id="identity-title"
                             title="Account data"
                             description="The Hanami account and connected osu! data affected by deletion."
                         />
-                        <dl className="grid gap-8 px-[clamp(1.35rem,3vw,2rem)] py-5 [&_dd]:mt-2 [&_dd]:text-base [&_dd]:font-bold [&_dd]:text-white [&_dt]:font-mono [&_dt]:text-[0.68rem] [&_dt]:tracking-[0.08em] [&_dt]:text-quiet [&_dt]:uppercase [&_small]:mt-1 [&_small]:block [&_small]:text-[0.78rem] [&_small]:leading-[1.55] [&_small]:text-muted">
+                        <dl className="grid gap-8 px-[clamp(1.35rem,3vw,2rem)] py-5 [&_dd]:mt-2 [&_dd]:text-base [&_dd]:font-bold [&_dd]:text-white [&_dt]:text-[0.78rem] [&_dt]:font-medium [&_dt]:text-quiet [&_small]:mt-1 [&_small]:block [&_small]:text-[0.78rem] [&_small]:leading-[1.55] [&_small]:text-muted">
                             <div>
                                 <dt>Current Hanami account</dt>
                                 <dd>{session.user.name || "Hanami user"}</dd>
@@ -204,7 +201,7 @@ export default function AccountPrivacy() {
                     </AccountPanel>
 
                     <AccountPanel
-                        className="border-danger/35 min-[960px]:row-span-2 min-[960px]:grid min-[960px]:grid-rows-subgrid min-[960px]:gap-0"
+                        className="border-danger/35 lg:row-span-2 lg:grid lg:grid-rows-subgrid lg:gap-0"
                         aria-labelledby="delete-title"
                     >
                         <AccountPanelHeader

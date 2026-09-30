@@ -13,7 +13,6 @@ export const legalServices = [
     { name: "Hanami Bot", status: "Hosted Discord bot" },
     { name: "osu!guessr", status: "Separately hosted game" },
     { name: "Hanami Companion", status: "Unfinished local prototype" },
-    { name: "Map Analyzer", status: "Distributed Rust library" },
 ] as const;
 
 export const legalDocuments = [

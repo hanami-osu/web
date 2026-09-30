@@ -1,24 +1,35 @@
+@import "@fontsource-variable/sora";
 @import "tailwindcss";
 
 @theme {
     --color-bg: #0a090c;
+    --color-bg-sunken: #08070a;
     --color-surface: #111015;
     --color-surface-strong: #17151b;
     --color-text: #f5f2f5;
+    --color-body: #ddd6de;
     --color-muted: #aaa3ad;
-    --color-quiet: #756f78;
+    --color-quiet: #958c99;
+    --color-ink: #171319;
     --color-border: rgba(255, 255, 255, 0.13);
     --color-border-strong: rgba(255, 255, 255, 0.22);
     --color-accent: #eb76aa;
     --color-accent-soft: #f3a2c7;
     --color-violet: #b49cf7;
+    --color-violet-soft: #d8ccff;
     --color-cyan: #80d7e8;
+    --color-cyan-soft: #c4f1f7;
     --color-lime: #b4da7a;
     --color-danger: #f48c91;
+    --color-danger-soft: #ffc3c6;
     --color-success: #86d6a0;
 
-    --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --font-sans: "Sora Variable", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+
+    --breakpoint-xs: 600px;
+    --breakpoint-md: 820px;
+    --breakpoint-lg: 1080px;
 
     --radius-sm: 6px;
     --radius-md: 10px;

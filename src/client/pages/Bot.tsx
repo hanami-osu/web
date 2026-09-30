@@ -18,6 +18,8 @@ import {
     sectionHeadingClass,
 } from "@/components/product/product-layout";
 import { getProduct } from "@/data/site-config";
+import { revealUpLate } from "@/lib/motion";
+import { cn } from "@/lib/utils";
 
 const commands = [
     ["/profile", "Player profiles", "Rank, accuracy, play count, country, and account details."],
@@ -33,11 +35,11 @@ export default function Bot() {
 
     return (
         <ProductPage>
-            <ProductHero className="bg-[linear-gradient(125deg,#121015_0%,#171019_68%,#22111a_100%)]">
+            <ProductHero tone="rose">
                 <div className={productHeroCopyClass}>
                     <Eyebrow>Discord bot</Eyebrow>
                     <h1 className={productTitleClass}>{product.name}</h1>
-                    <h2 className={productSubtitleClass}>Look up osu! players and scores in Discord.</h2>
+                    <p className={productSubtitleClass}>Your osu! scores, right in Discord.</p>
                     <p className={productBodyClass}>
                         Look up players, scores, and beatmaps inside Discord. Link an osu! account once to use your own profile as the
                         default in supported commands.
@@ -51,9 +53,9 @@ export default function Bot() {
                         </ActionLink>
                     </HeroActions>
                 </div>
-                <figure className="self-end text-center motion-safe:animate-[reveal-up_550ms_150ms_cubic-bezier(0.2,0.7,0.2,1)_both]">
+                <figure className={cn("hidden text-center md:block", revealUpLate)}>
                     <img
-                        className="mx-auto w-[min(100%,470px)] max-[820px]:w-[min(70%,340px)]"
+                        className="mx-auto w-[min(100%,340px)]"
                         src="/hanami-transparent.png"
                         alt="Hanami mascot"
                         width="565"
@@ -68,10 +70,10 @@ export default function Bot() {
                     title="Player, score, and beatmap commands"
                     body="Use these commands in your Discord server."
                 />
-                <div className="grid gap-7" id="bot-commands-title">
+                <div className="grid gap-x-10 md:grid-cols-2" id="bot-commands-title">
                     {commands.map(([command, title, description]) => (
                         <article
-                            className="grid grid-cols-[9rem_1fr] items-start gap-6 py-2 max-[600px]:grid-cols-1 max-[600px]:gap-y-[0.6rem]"
+                            className="grid grid-cols-[6rem_1fr] items-start gap-4 border-t border-border py-5 max-xs:grid-cols-1 max-xs:gap-2"
                             key={command}
                         >
                             <code className="font-mono text-[0.86rem] text-accent-soft">{command}</code>
@@ -89,8 +91,8 @@ export default function Bot() {
                     <Eyebrow>Optional account link</Eyebrow>
                     <h2 className={sectionHeadingClass}>Link your osu! account</h2>
                     <p className={sectionBodyClass}>
-                        Sign in with Discord and connect your osu! account. You can also change the bot’s display settings from your
-                        profile.
+                        Run <code>/link</code> in your Discord server for a private, one-time link, or sign in with Discord and connect your
+                        osu! account from your Hanami Web profile. You can also change the bot’s display settings there.
                     </p>
                     <TextLink className="mt-[1.8rem]" href="/profile">
                         Open account settings
@@ -99,7 +101,9 @@ export default function Bot() {
                 <ProductSteps>
                     <ProductStep icon={<Link2 aria-hidden="true" />}>
                         <strong>Connect</strong>
-                        <p>Connect your osu! account to your Discord account.</p>
+                        <p>
+                            Link from Discord with <code>/link</code> or connect your osu! account in your web profile.
+                        </p>
                     </ProductStep>
                     <ProductStep icon={<SlidersHorizontal aria-hidden="true" />}>
                         <strong>Choose defaults</strong>

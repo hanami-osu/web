@@ -10,7 +10,7 @@ describe("public page rendering", () => {
 
         expect(html).toContain("<main>");
         expect(html).toContain("Hanami Bot");
-        expect(html).toContain("Look up osu! players and scores in Discord.");
+        expect(html).toContain("Your osu! scores, right in Discord.");
         expect(html).toContain('href="/legal/data-deletion"');
     });
 

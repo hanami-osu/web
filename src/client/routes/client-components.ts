@@ -30,7 +30,6 @@ const companion = createPreloadableRoute(() => import("../pages/Companion"));
 const home = createPreloadableRoute(() => import("../pages/Home"));
 const linkError = createPreloadableRoute(() => import("../pages/LinkError"));
 const login = createPreloadableRoute(() => import("../pages/Login"));
-const mapAnalyzer = createPreloadableRoute(() => import("../pages/MapAnalyzer"));
 const notFound = createPreloadableRoute(() => import("../pages/NotFound"));
 const osuGuessr = createPreloadableRoute(() => import("../pages/OsuGuessr"));
 const osuOAuthContinuation = createPreloadableRoute(() => import("../pages/OsuOAuthContinuation"));
@@ -52,7 +51,6 @@ export const clientRouteComponents = {
     LegalIndex: legalIndex.Component,
     LinkErrorPage: linkError.Component,
     LoginPage: login.Component,
-    MapAnalyzerPage: mapAnalyzer.Component,
     NotFoundPage: notFound.Component,
     OsuGuessrPage: osuGuessr.Component,
     OsuOAuthContinuationPage: osuOAuthContinuation.Component,
@@ -66,7 +64,6 @@ const routePreloaders: Partial<Record<InternalRoutePath, () => Promise<unknown>>
     [routes.bot]: bot.preload,
     [routes.osuguessr]: osuGuessr.preload,
     [routes.companion]: companion.preload,
-    [routes.mapAnalyzer]: mapAnalyzer.preload,
     [routes.legal]: legalIndex.preload,
     [routes.legalPrivacy]: privacyPolicy.preload,
     [routes.legalTerms]: termsOfService.preload,

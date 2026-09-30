@@ -17,7 +17,7 @@ export const siteConfig = {
     },
 } as const;
 
-export type ProductKey = "bot" | "osuguessr" | "companion" | "map-analyzer";
+export type ProductKey = "bot" | "osuguessr" | "companion";
 
 export interface ProductSummary {
     key: ProductKey;
@@ -75,20 +75,6 @@ export const products: readonly ProductSummary[] = [
             source: "https://github.com/hanami-osu/companion",
         },
     },
-    {
-        key: "map-analyzer",
-        name: "Map Analyzer",
-        route: routes.mapAnalyzer,
-        category: "Rust library",
-        description: "Inspect stream and jump patterns from local .osu files in Rust.",
-        action: "Open Map Analyzer",
-        tone: "lime",
-        links: {
-            primary: "https://docs.rs/osu-map-analyzer/latest/osu_map_analyzer/",
-            source: "https://github.com/yorunoken/osu-map-analyzer-lib",
-            crate: "https://crates.io/crates/osu-map-analyzer",
-        },
-    },
 ] as const;
 
 export const navigation = products.map(({ name, route }) => ({
@@ -112,7 +98,7 @@ export interface RouteMetadata {
 export const routeMetadata = {
     "/": {
         title: "Hanami | osu! tools and games",
-        description: "Hanami Bot, osu!guessr, Hanami Companion, and Map Analyzer: osu! tools and games.",
+        description: "Hanami Bot, osu!guessr, and Hanami Companion: osu! tools and games.",
         indexable: true,
     },
     "/bot": {
@@ -132,11 +118,6 @@ export const routeMetadata = {
         description: "Track osu! plays with Hanami Companion. The app is still in development.",
         indexable: true,
         socialImage: "/products/companion-icon.png",
-    },
-    "/map-analyzer": {
-        title: "Map Analyzer | osu! beatmap analysis",
-        description: "Analyze stream and jump patterns in .osu files with the published osu-map-analyzer Rust library.",
-        indexable: true,
     },
     "/legal": {
         title: "Legal center | Hanami",

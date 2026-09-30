@@ -1,14 +1,19 @@
 import { Menu, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 
 import { routes } from "@/client/routes/paths";
+import { siteContainerClass } from "@/components/layout/styles";
 import { PrefetchLink } from "@/components/navigation/prefetch-link";
 import ProfileAction from "@/components/navigation/profile-action";
 import { navigation, siteConfig } from "@/data/site-config";
+import { navIn } from "@/lib/motion";
+import { cn } from "@/lib/utils";
 
 export default function Header() {
     const [menuOpen, setMenuOpen] = useState(false);
+    const headerRef = useRef<HTMLElement>(null);
+    const menuButtonRef = useRef<HTMLButtonElement>(null);
     const { pathname } = useLocation();
 
     useEffect(() => {
@@ -16,17 +21,28 @@ export default function Header() {
     }, [pathname]);
 
     useEffect(() => {
+        if (!menuOpen) return;
         const closeOnEscape = (event: KeyboardEvent) => {
-            if (event.key === "Escape") setMenuOpen(false);
+            if (event.key === "Escape") {
+                setMenuOpen(false);
+                menuButtonRef.current?.focus();
+            }
+        };
+        const closeOnOutsideClick = (event: PointerEvent) => {
+            if (!headerRef.current?.contains(event.target as Node)) setMenuOpen(false);
         };
 
         document.addEventListener("keydown", closeOnEscape);
-        return () => document.removeEventListener("keydown", closeOnEscape);
-    }, []);
+        document.addEventListener("pointerdown", closeOnOutsideClick);
+        return () => {
+            document.removeEventListener("keydown", closeOnEscape);
+            document.removeEventListener("pointerdown", closeOnOutsideClick);
+        };
+    }, [menuOpen]);
 
     return (
-        <header className="sticky top-0 isolate z-50 h-18 border-b border-border bg-[rgba(10,9,12,0.88)] backdrop-blur-2xl print:hidden">
-            <div className="mx-auto flex h-full w-[min(calc(100%-1.5rem),1400px)] items-center gap-6 sm:w-[min(calc(100%-clamp(2rem,6vw,6rem)),1400px)]">
+        <header ref={headerRef} className="sticky top-0 isolate z-50 h-18 border-b border-border bg-bg/95 backdrop-blur-xl print:hidden">
+            <div className={cn(siteContainerClass, "flex h-full items-center gap-6")}>
                 <PrefetchLink
                     to={routes.home}
                     prefetch="none"
@@ -37,24 +53,25 @@ export default function Header() {
                     <span>Hanami</span>
                 </PrefetchLink>
 
-                <nav className="ml-auto hidden items-center gap-[clamp(1rem,2.2vw,2rem)] min-[1081px]:flex" aria-label="Primary navigation">
+                <nav className="ml-auto hidden items-center gap-6 md:flex" aria-label="Primary navigation">
                     {navigation.map((item) => (
                         <PrefetchLink
                             key={item.to}
                             to={item.to}
                             prefetch="intent"
                             aria-current={pathname === item.to ? "page" : undefined}
-                            className="relative py-6 text-[0.82rem] font-semibold whitespace-nowrap text-muted no-underline transition-colors duration-160 after:absolute after:inset-x-0 after:bottom-[0.95rem] after:h-px after:origin-left after:scale-x-0 after:bg-current after:transition-transform after:duration-160 hover:text-white hover:after:scale-x-100 aria-[current=page]:text-white aria-[current=page]:after:scale-x-100"
+                            className="relative py-6 text-[0.82rem] font-semibold whitespace-nowrap text-muted no-underline transition-colors duration-150 after:absolute after:inset-x-0 after:bottom-[0.95rem] after:h-px after:origin-left after:scale-x-0 after:bg-current after:transition-transform after:duration-150 hover:text-white hover:after:scale-x-100 aria-[current=page]:text-white aria-[current=page]:after:scale-x-100"
                         >
                             {item.label}
                         </PrefetchLink>
                     ))}
                 </nav>
 
-                <div className="ml-auto flex items-center gap-1.5 min-[1081px]:ml-0">
+                <div className="ml-auto flex items-center gap-1.5 md:ml-0">
                     <ProfileAction mobileNavigationOpen={menuOpen} onMenuOpen={() => setMenuOpen(false)} />
                     <button
-                        className="inline-flex min-h-10 w-10.5 items-center justify-center border-0 bg-transparent text-white min-[1081px]:hidden [&_svg]:size-4.5"
+                        ref={menuButtonRef}
+                        className="inline-flex size-11 items-center justify-center rounded-sm border border-border bg-transparent text-white hover:bg-surface md:hidden [&_svg]:size-5"
                         type="button"
                         aria-expanded={menuOpen}
                         aria-controls="mobile-navigation"
@@ -68,33 +85,39 @@ export default function Header() {
 
             <nav
                 id="mobile-navigation"
-                className="absolute inset-x-0 top-18 min-h-[calc(100svh-72px)] bg-[rgba(10,9,12,0.98)] px-[clamp(1.25rem,5vw,3rem)] py-8 motion-safe:animate-[nav-in_180ms_ease_both] min-[1081px]:hidden"
+                className={cn(
+                    "absolute inset-x-0 top-18 max-h-[calc(100dvh-72px)] overflow-y-auto border-b border-border bg-bg px-4 py-4 shadow-xl md:hidden",
+                    navIn,
+                )}
                 aria-label="Mobile navigation"
                 hidden={!menuOpen}
             >
-                <div className="mb-8 pb-2">
-                    <p className="mb-3 font-mono text-[0.65rem] tracking-[0.12em] text-accent-soft uppercase">Hanami</p>
+                <div className="mx-auto max-w-180">
                     <PrefetchLink
-                        className="flex min-h-14 items-center text-[1.35rem] font-bold text-white no-underline"
+                        className="flex min-h-12 items-center rounded-sm px-3 text-base font-medium text-muted no-underline hover:bg-surface hover:text-white aria-[current=page]:bg-surface aria-[current=page]:text-accent-soft"
                         to={routes.home}
                         prefetch="none"
+                        aria-current={pathname === routes.home ? "page" : undefined}
+                        onClick={() => setMenuOpen(false)}
                     >
-                        Overview
+                        Home
                     </PrefetchLink>
                 </div>
-                <div className="grid">
+                <div className="mx-auto grid max-w-180">
                     {navigation.map((item) => (
                         <PrefetchLink
-                            className="flex min-h-16 items-center text-[clamp(1.15rem,5vw,1.55rem)] font-bold text-white no-underline"
+                            className="flex min-h-12 items-center rounded-sm px-3 text-base font-medium text-muted no-underline hover:bg-surface hover:text-white aria-[current=page]:bg-surface aria-[current=page]:text-accent-soft"
                             key={item.to}
                             to={item.to}
                             prefetch="intent"
+                            aria-current={pathname === item.to ? "page" : undefined}
+                            onClick={() => setMenuOpen(false)}
                         >
                             {item.label}
                         </PrefetchLink>
                     ))}
                 </div>
-                <div className="flex flex-wrap gap-x-6 gap-y-4 pt-8 [&_a]:text-[0.85rem] [&_a]:text-muted">
+                <div className="mx-auto mt-3 flex max-w-180 flex-wrap gap-x-6 border-t border-border px-3 pt-3 [&_a]:inline-flex [&_a]:min-h-11 [&_a]:items-center [&_a]:text-sm [&_a]:text-muted">
                     <a href={siteConfig.links.community} target="_blank" rel="noreferrer">
                         Community
                     </a>

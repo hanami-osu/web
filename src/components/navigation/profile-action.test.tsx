@@ -59,12 +59,7 @@ describe("header account control", () => {
 function render({ session: currentSession, isPending }: { session: HeaderSession | null; isPending: boolean }): string {
     return renderToStaticMarkup(
         <MemoryRouter>
-            <ProfileActionView
-                session={currentSession}
-                isPending={isPending}
-                routeKey="/"
-                onSignOut={async () => {}}
-            />
+            <ProfileActionView session={currentSession} isPending={isPending} routeKey="/" onSignOut={async () => {}} />
         </MemoryRouter>,
     );
 }

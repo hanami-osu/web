@@ -20,7 +20,6 @@ const {
     LegalIndex,
     LinkErrorPage,
     LoginPage,
-    MapAnalyzerPage,
     NotFoundPage,
     OsuGuessrPage,
     OsuOAuthContinuationPage,
@@ -50,7 +49,6 @@ export function AppContent() {
                         <Route path={routes.bot} element={<BotPage />} />
                         <Route path={routes.osuguessr} element={<OsuGuessrPage />} />
                         <Route path={routes.companion} element={<CompanionPage />} />
-                        <Route path={routes.mapAnalyzer} element={<MapAnalyzerPage />} />
                         <Route
                             path={routes.legal}
                             element={

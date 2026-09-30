@@ -60,7 +60,7 @@ export function ConfirmationPage({
                         </p>
                         {error && <ErrorMessage>{error}</ErrorMessage>}
                         <label className="mt-8 grid gap-[0.7rem]">
-                            <span className="text-[0.82rem] font-bold text-[#e8e2e9]">
+                            <span className="text-[0.82rem] font-bold text-body">
                                 Type <code className="font-mono text-accent-soft">{confirmationPhrase}</code> to continue
                             </span>
                             <input

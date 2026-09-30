@@ -1,21 +1,22 @@
 import { ArrowLeft, Loader2 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import { claimPendingAttempt, signInWithDiscord, signInWithOsu, type IdentityProvider, useSession } from "@/client/lib/auth";
 import {
     getAuthenticatedLoginDestination,
+    isOsuGuessrOAuthContinuationRequest,
     isOsuOAuthContinuationRequest,
     readOAuthError,
     readReturnTo,
 } from "@/client/lib/auth-navigation";
 import { routes } from "@/client/routes/paths";
-import { AccountPage } from "@/components/account/account-shell";
+import { AuthLayout, AuthPanel } from "@/components/account/account-shell";
 import { DiscordLogo, OsuLogo } from "@/components/icons/provider-icons";
-import { siteContainerClass } from "@/components/layout/styles";
 import { Eyebrow } from "@/components/marketing";
 import { PrefetchLink } from "@/components/navigation/prefetch-link";
 import { primaryActionClass, textButtonClass } from "@/components/ui/action-styles";
+import { revealUpFast, spin } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
 export default function Login() {
@@ -24,6 +25,10 @@ export default function Login() {
     const navigate = useNavigate();
     const returnTo = useMemo(() => readReturnTo(location.search), [location.search]);
     const osuAuthorization = useMemo(() => isOsuOAuthContinuationRequest(location.search), [location.search]);
+    const osuGuessrAuthorization = useMemo(
+        () => isOsuGuessrOAuthContinuationRequest(location.search, import.meta.env.OSU_GUESSR_CLIENT_ID ?? ""),
+        [location.search],
+    );
     const oauthError = useMemo(
         () => readOAuthError(location.search, osuAuthorization ? "osu" : "discord"),
         [location.search, osuAuthorization],
@@ -62,57 +67,24 @@ export default function Login() {
 
     if (isSessionPending) {
         return (
-            <LoginScene>
+            <AuthLayout>
                 <LoginPending />
-            </LoginScene>
+            </AuthLayout>
         );
     }
 
     return (
-        <LoginScene>
-            <LoginPanel
-                error={localError || oauthError}
-                status={accountDeleted ? "Your Hanami account was deleted." : null}
-                mode={osuAuthorization ? "osu" : "general"}
-                redirectingProvider={redirectingProvider}
-                onSignIn={handleSignIn}
-            />
-        </LoginScene>
-    );
-}
-
-function LoginScene({ children }: { children: ReactNode }) {
-    return (
-        <AccountPage>
-            <main className="relative isolate min-h-[calc(100svh-72px)] overflow-hidden border-b border-border max-[900px]:min-h-[min(780px,calc(100svh-72px))]">
-                <div
-                    className="absolute inset-0 bg-[linear-gradient(115deg,rgba(235,118,170,0.055),transparent_42%),linear-gradient(180deg,transparent_68%,rgba(0,0,0,0.18))]"
-                    aria-hidden="true"
+        <AuthLayout>
+            <AuthPanel width="compact">
+                <LoginPanel
+                    error={localError || oauthError}
+                    status={accountDeleted ? "Your Hanami account was deleted." : null}
+                    mode={osuAuthorization ? (osuGuessrAuthorization ? "osu-guessr" : "osu") : "general"}
+                    redirectingProvider={redirectingProvider}
+                    onSignIn={handleSignIn}
                 />
-                <div
-                    className={cn(
-                        siteContainerClass,
-                        "relative grid min-h-[calc(100svh-72px)] grid-cols-[minmax(0,1fr)_minmax(280px,0.62fr)] items-center gap-[clamp(3rem,8vw,8rem)] py-[clamp(4.5rem,9vw,7.5rem)] max-[900px]:min-h-[min(780px,calc(100svh-72px))] max-[900px]:grid-cols-1 max-[900px]:items-start max-[900px]:gap-0 max-[900px]:pt-[clamp(5rem,12vh,7rem)] max-[900px]:pb-[clamp(5rem,10vh,7rem)] max-[600px]:pt-[clamp(4.5rem,11vh,5.75rem)] max-[600px]:pb-14",
-                    )}
-                >
-                    {children}
-                    <div
-                        className="pointer-events-none relative h-full min-h-125 self-end max-[900px]:absolute max-[900px]:-right-24 max-[900px]:bottom-0 max-[900px]:h-96 max-[900px]:min-h-0 max-[900px]:w-90 max-[900px]:opacity-12 max-[600px]:-right-32 max-[600px]:h-80 max-[600px]:w-80"
-                        aria-hidden="true"
-                    >
-                        <div className="relative size-full motion-safe:animate-[reveal-up_550ms_150ms_cubic-bezier(0.2,0.7,0.2,1)_both]">
-                            <img
-                                className="absolute right-[-8%] bottom-[-5%] h-auto w-[min(35vw,500px)] max-w-none opacity-58 max-[900px]:right-0 max-[900px]:bottom-[-8%] max-[900px]:w-full max-[900px]:opacity-100"
-                                src="/hanami-transparent.png"
-                                alt=""
-                                width="565"
-                                height="542"
-                            />
-                        </div>
-                    </div>
-                </div>
-            </main>
-        </AccountPage>
+            </AuthPanel>
+        </AuthLayout>
     );
 }
 
@@ -125,54 +97,50 @@ export function LoginPanel({
 }: {
     error: string | null;
     status?: string | null;
-    mode?: "general" | "osu";
+    mode?: "general" | "osu" | "osu-guessr";
     redirectingProvider: IdentityProvider | null;
     onSignIn: (provider: IdentityProvider) => void;
 }) {
-    const osuMode = mode === "osu";
+    const osuMode = mode !== "general";
 
     return (
-        <section
-            className="relative z-10 max-w-165 motion-safe:animate-[reveal-up_420ms_60ms_cubic-bezier(0.2,0.7,0.2,1)_both]"
-            aria-labelledby="sign-in-title"
-        >
+        <section className={cn("w-full", revealUpFast)} aria-labelledby="sign-in-title">
             <Eyebrow>Hanami account</Eyebrow>
-            <h1
-                className="text-[clamp(3rem,6vw,4.75rem)] leading-[0.98] tracking-[-0.06em] text-white max-[600px]:text-[clamp(2.7rem,13vw,4rem)]"
-                id="sign-in-title"
-            >
+            <h1 className="text-[clamp(1.875rem,5vw,2.25rem)] leading-[1.1] tracking-[-0.04em] text-white" id="sign-in-title">
                 Sign in to Hanami
             </h1>
             <p className="mt-6 max-w-[54ch] text-[clamp(1rem,1.5vw,1.12rem)] leading-[1.7] text-muted">
                 {osuMode
-                    ? "Use osu! to return to the requesting app."
+                    ? mode === "osu-guessr"
+                        ? "Hanami handles sign-in for osu!guessr. New users get a Hanami account automatically, then return to osu!guessr."
+                        : "Use osu! to return to the requesting app."
                     : "Sign in with Discord or osu!. If you’ve linked both accounts, you can use either one."}
             </p>
 
             {status && (
                 <div className="mt-7 border-l-2 border-success py-1 pl-4" role="status">
-                    <p className="font-mono text-[0.65rem] tracking-[0.08em] text-success uppercase">Account deleted</p>
-                    <p className="mt-1.5 max-w-[54ch] text-[0.84rem] leading-[1.6] text-[#d6cfd7]">{status}</p>
+                    <p className="text-[0.7rem] font-semibold tracking-[0.08em] text-success uppercase">Account deleted</p>
+                    <p className="mt-1.5 max-w-[54ch] text-[0.84rem] leading-[1.6] text-body">{status}</p>
                 </div>
             )}
 
             {error && (
                 <div className="mt-7 border-l-2 border-danger py-1 pl-4" role="alert">
-                    <p className="font-mono text-[0.65rem] tracking-[0.08em] text-danger uppercase">Sign-in paused</p>
-                    <p className="mt-1.5 max-w-[54ch] text-[0.84rem] leading-[1.6] text-[#d6cfd7]">{error}</p>
+                    <p className="text-[0.7rem] font-semibold tracking-[0.08em] text-danger uppercase">Sign-in paused</p>
+                    <p className="mt-1.5 max-w-[54ch] text-[0.84rem] leading-[1.6] text-body">{error}</p>
                 </div>
             )}
 
-            <div className="mt-8 flex flex-wrap gap-3">
+            <div className="mt-8 grid gap-3">
                 {!osuMode && (
                     <button
-                        className={cn(primaryActionClass, "w-[min(100%,15rem)]")}
+                        className={cn(primaryActionClass, "h-12 w-full")}
                         type="button"
                         onClick={() => onSignIn("discord")}
                         disabled={redirectingProvider !== null}
                     >
                         {redirectingProvider === "discord" ? (
-                            <Loader2 className="animate-[spin_900ms_linear_infinite] motion-reduce:animate-none" aria-hidden="true" />
+                            <Loader2 className={spin} aria-hidden="true" />
                         ) : (
                             <DiscordLogo aria-hidden="true" />
                         )}
@@ -180,25 +148,15 @@ export function LoginPanel({
                     </button>
                 )}
                 <button
-                    className={cn(primaryActionClass, "w-[min(100%,15rem)]")}
+                    className={cn(primaryActionClass, "h-12 w-full")}
                     type="button"
                     onClick={() => onSignIn("osu")}
                     disabled={redirectingProvider !== null}
                 >
-                    {redirectingProvider === "osu" ? (
-                        <Loader2 className="animate-[spin_900ms_linear_infinite] motion-reduce:animate-none" aria-hidden="true" />
-                    ) : (
-                        <OsuLogo aria-hidden="true" />
-                    )}
+                    {redirectingProvider === "osu" ? <Loader2 className={spin} aria-hidden="true" /> : <OsuLogo aria-hidden="true" />}
                     {redirectingProvider === "osu" ? "Opening osu!…" : osuMode ? "Try osu! again" : "Continue with osu!"}
                 </button>
             </div>
-
-            {!osuMode && (
-                <p className="mt-5 max-w-[60ch] border-l border-border-strong pl-4 text-[0.76rem] leading-[1.6] text-quiet">
-                    Connecting a Discord or osu! account that is already linked elsewhere will move it to your current Hanami account.
-                </p>
-            )}
 
             <div className="mt-8 flex flex-wrap items-center gap-x-7 gap-y-4">
                 <PrefetchLink className={textButtonClass} to={routes.home} prefetch="none">

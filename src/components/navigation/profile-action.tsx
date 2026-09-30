@@ -4,14 +4,15 @@ import { useLocation, useNavigate } from "react-router-dom";
 
 import { claimPendingAttempt, signOutFromHanami, useSession } from "@/client/lib/auth";
 import { routes } from "@/client/routes/paths";
+import { navInFast } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
 import { PrefetchLink } from "./prefetch-link";
 import { accountActionClass } from "./styles";
 
-const controlFrameClass = "relative flex w-36 shrink-0 justify-end max-[600px]:w-24";
+const controlFrameClass = "relative flex w-36 shrink-0 justify-end max-xs:w-24";
 const menuItemClass =
-    "group relative flex min-h-12 w-full items-center gap-3 border-0 border-b border-border bg-transparent px-4 text-left text-[0.82rem] font-bold text-muted no-underline transition-[background,color] duration-160 before:absolute before:inset-y-3 before:left-0 before:w-px before:origin-center before:scale-y-0 before:bg-accent before:transition-transform before:duration-160 hover:bg-white/[0.035] hover:text-white hover:before:scale-y-100 focus-visible:bg-white/[0.035] focus-visible:text-white focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent/50 focus-visible:before:scale-y-100 disabled:cursor-progress disabled:opacity-60 [&_svg]:size-4 [&_svg]:shrink-0";
+    "group relative flex min-h-12 w-full items-center gap-3 border-0 border-b border-border bg-transparent px-4 text-left text-[0.82rem] font-bold text-muted no-underline transition-[background,color] duration-150 before:absolute before:inset-y-3 before:left-0 before:w-px before:origin-center before:scale-y-0 before:bg-accent before:transition-transform before:duration-150 hover:bg-white/[0.035] hover:text-white hover:before:scale-y-100 focus-visible:bg-white/[0.035] focus-visible:text-white focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent/50 focus-visible:before:scale-y-100 disabled:cursor-progress disabled:opacity-60 [&_svg]:size-4 [&_svg]:shrink-0";
 
 export default function ProfileAction({
     mobileNavigationOpen = false,
@@ -207,15 +208,18 @@ export function ProfileActionView({
                         {displayName.slice(0, 1).toUpperCase()}
                     </span>
                 )}
-                <span className="max-w-16 truncate max-[600px]:sr-only">Account</span>
-                <ChevronDown className={cn("transition-transform duration-160", menuOpen && "rotate-180")} aria-hidden="true" />
+                <span className="max-w-16 truncate max-xs:sr-only">Account</span>
+                <ChevronDown className={cn("transition-transform duration-150", menuOpen && "rotate-180")} aria-hidden="true" />
             </button>
 
             {menuOpen && (
                 <div
                     ref={menuRef}
                     id="account-menu"
-                    className="absolute top-[calc(100%+0.75rem)] right-0 z-50 w-72 max-w-[calc(100vw-2rem)] origin-top-right border border-border-strong bg-[#0d0b0f] shadow-[0_22px_60px_rgba(0,0,0,0.44)] motion-safe:animate-[nav-in_150ms_cubic-bezier(0.2,0.7,0.2,1)_both]"
+                    className={cn(
+                        "absolute top-[calc(100%+0.75rem)] right-0 z-50 w-72 max-w-[calc(100vw-2rem)] origin-top-right border border-border-strong bg-surface-strong shadow-[0_22px_60px_rgba(0,0,0,0.44)]",
+                        navInFast,
+                    )}
                     role="menu"
                     aria-label="Account"
                     onKeyDown={handleMenuKeyDown}

@@ -105,6 +105,17 @@ export function isOsuOAuthContinuationRequest(search: string): boolean {
     );
 }
 
+export function isOsuGuessrOAuthContinuationRequest(search: string, clientId: string): boolean {
+    if (!clientId || !isOsuOAuthContinuationRequest(search)) return false;
+
+    const signedParams = new URLSearchParams(getSignedOAuthQuery(search) ?? "");
+    return (
+        signedParams.getAll("client_id").length === 1 &&
+        signedParams.get("client_id") === clientId &&
+        signedParams.getAll("ba_param").includes("client_id")
+    );
+}
+
 export function describeOAuthError(code: string | null, provider: "discord" | "osu" = "discord"): string | null {
     if (!code) return null;
     if (provider === "osu") return describeOsuOAuthError(code);

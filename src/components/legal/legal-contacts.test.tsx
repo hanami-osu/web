@@ -41,7 +41,6 @@ describe("legal contacts and request links", () => {
         expect(html).toContain("Hanami Bot");
         expect(html).toContain("osu!guessr");
         expect(html).toContain("Hanami Companion");
-        expect(html).toContain("Map Analyzer");
     });
 
     it("gives each legal document an at-a-glance summary and related actions", () => {
@@ -85,13 +84,11 @@ describe("legal contacts and request links", () => {
         expect(deletion).not.toContain("backup copies may");
     });
 
-    it("describes reports and distributed projects as implemented", () => {
+    it("describes reports as implemented", () => {
         const privacy = render(PrivacyPolicy);
         const terms = render(TermsOfService);
 
         expect(privacy).toContain("free-text description");
-        expect(privacy).toContain("no network client dependency or command-line binary");
-        expect(terms).toContain("separately distributed Rust library");
         expect(terms).not.toContain("optional description");
     });
 

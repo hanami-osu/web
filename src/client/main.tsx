@@ -3,6 +3,7 @@ import { createRoot, hydrateRoot } from "react-dom/client";
 
 import { getCanonicalDevelopmentAuthURL } from "./lib/auth-navigation";
 import App from "./App";
+import "@fontsource-variable/sora";
 import "./globals.css";
 
 const canonicalDevelopmentURL = getCanonicalDevelopmentAuthURL(window.location.href, Boolean(import.meta.env.DEV));

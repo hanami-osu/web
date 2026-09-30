@@ -20,7 +20,7 @@ export default function PrivacyPolicy() {
     return (
         <LegalDocument
             title="Privacy policy"
-            summary="How the Hanami website, Hanami Bot, osu!guessr, and Map Analyzer process information."
+            summary="How the Hanami website, Hanami Bot, and osu!guessr process information."
             toc={toc}
             atAGlance={[
                 "The website, Bot, and osu!guessr have different data stores and service roles.",
@@ -49,11 +49,6 @@ export default function PrivacyPolicy() {
                 <p>
                     This policy covers the Hanami services operated by the controller: this website and account area, Hanami Bot on Discord,
                     and the separately hosted osu!guessr service.
-                </p>
-                <p>
-                    Map Analyzer 0.2.9 is a separately distributed Rust library. The published crate parses local files and has no network
-                    client dependency or command-line binary. Broader CLI and dataset work exists only in an unpublished development
-                    worktree.
                 </p>
             </LegalSection>
 

@@ -1,6 +1,7 @@
 import { ArrowRight, ArrowUpRight } from "lucide-react";
 import type { ReactNode } from "react";
 
+import { sectionBodyClass, sectionHeadingClass } from "@/components/layout/styles";
 import { PrefetchLink, type PrefetchMode } from "@/components/navigation/prefetch-link";
 import { primaryActionClass, secondaryActionClass } from "@/components/ui/action-styles";
 import { cn } from "@/lib/utils";
@@ -52,24 +53,15 @@ export function ActionLink({ children, className, href, variant = "primary", ext
 }
 
 export function Eyebrow({ children, className }: { children: ReactNode; className?: string }) {
-    return (
-        <p
-            className={cn(
-                "mb-[1.1rem] font-mono text-[0.72rem] leading-[1.4] font-semibold tracking-[0.14em] text-accent-soft uppercase",
-                className,
-            )}
-        >
-            {children}
-        </p>
-    );
+    return <p className={cn("mb-3 text-[0.82rem] leading-normal font-medium text-accent-soft", className)}>{children}</p>;
 }
 
 export function SectionIntro({ eyebrow, title, body }: { eyebrow: string; title: string; body?: string }) {
     return (
-        <header className="mb-[clamp(2.5rem,5vw,4.5rem)] max-w-180">
+        <header className="mb-8 max-w-180">
             <Eyebrow>{eyebrow}</Eyebrow>
-            <h2 className="text-[clamp(2rem,4.2vw,3.8rem)] leading-[1.04] tracking-[-0.055em] text-white">{title}</h2>
-            {body && <p className="mt-5 max-w-[62ch] text-[clamp(1rem,1.4vw,1.1rem)] leading-7 text-muted">{body}</p>}
+            <h2 className={sectionHeadingClass}>{title}</h2>
+            {body && <p className={cn("mt-5", sectionBodyClass)}>{body}</p>}
         </header>
     );
 }
@@ -88,7 +80,7 @@ export function TextLink({
     prefetch?: PrefetchMode;
 }) {
     const classes = cn(
-        "inline-flex w-fit items-center gap-[0.55rem] border-b border-border-strong pb-[0.3rem] text-[0.86rem] font-bold text-white no-underline transition-colors duration-160 hover:border-current hover:text-accent-soft [&_svg]:size-4",
+        "inline-flex min-h-11 w-fit items-center gap-[0.55rem] text-[0.86rem] font-semibold text-accent-soft no-underline transition-colors duration-150 hover:text-white [&_svg]:size-4",
         className,
     );
     const content = (

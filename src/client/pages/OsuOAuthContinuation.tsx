@@ -8,6 +8,7 @@ import { fetchJson } from "@/client/lib/fetch-json";
 import { AuthLayout, AuthPanel } from "@/components/account/account-shell";
 import { Eyebrow } from "@/components/marketing";
 import { primaryActionClass, textButtonClass } from "@/components/ui/action-styles";
+import { revealUpFast } from "@/lib/motion";
 
 type ContinuationState = "ready" | "connecting" | "conflict" | "continuing" | "error";
 
@@ -113,7 +114,7 @@ export function OsuOAuthContinuationPanel({
     const isBusy = state === "connecting" || state === "continuing";
 
     return (
-        <AuthPanel className="animate-[reveal-up_380ms_ease-out_both]">
+        <AuthPanel className={revealUpFast}>
             <Eyebrow>osu! authorization</Eyebrow>
             {state === "ready" || state === "connecting" ? (
                 <>

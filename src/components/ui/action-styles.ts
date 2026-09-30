@@ -1,12 +1,12 @@
 export const primaryActionClass =
-    "inline-flex min-h-11.5 items-center justify-center gap-2.5 rounded-sm border border-transparent bg-text px-[1.1rem] py-3 text-[0.84rem] leading-none font-extrabold text-[#171319] no-underline transition-[background,border-color,color,transform] duration-160 hover:-translate-y-px hover:bg-white disabled:cursor-progress disabled:opacity-60 disabled:hover:translate-y-0 max-[600px]:w-full [&>span]:inline-flex [&>span]:items-center [&>span]:gap-2 [&>span]:whitespace-nowrap [&_svg]:size-4.25 [&_svg]:shrink-0";
+    "inline-flex min-h-11.5 items-center justify-center gap-2.5 rounded-sm border border-transparent bg-text px-[1.1rem] py-3 text-[0.84rem] leading-none font-extrabold text-ink no-underline transition-[background,border-color,color,transform] duration-150 hover:bg-white disabled:cursor-progress disabled:opacity-60 disabled:hover:translate-y-0 max-xs:w-full [&>span]:inline-flex [&>span]:items-center [&>span]:gap-2 [&_svg]:size-4.25 [&_svg]:shrink-0";
 
 export const secondaryActionClass = "border-border-strong bg-[rgba(10,9,12,0.28)] text-white hover:border-white/40 hover:bg-white/8";
 
-export const compactActionClass = "min-h-10.5 w-fit text-[0.8rem] max-[600px]:w-full";
+export const compactActionClass = "min-h-10.5 w-fit text-[0.8rem] max-xs:w-full";
 
 export const dangerOutlineActionClass =
-    "border-danger/45 bg-transparent text-danger hover:border-danger hover:bg-danger/10 hover:text-[#ffc3c6]";
+    "border-danger/45 bg-transparent text-danger hover:border-danger hover:bg-danger/10 hover:text-danger-soft";
 
 export const textButtonClass =
     "inline-flex w-fit items-center gap-[0.55rem] border-0 border-b border-current bg-transparent pb-1 text-[0.8rem] font-bold text-white disabled:cursor-progress disabled:opacity-60 [&_svg]:size-4";

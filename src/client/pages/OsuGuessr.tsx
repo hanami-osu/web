@@ -1,4 +1,4 @@
-import { Github, Headphones, Image as ImageIcon, Paintbrush } from "lucide-react";
+import { Github } from "lucide-react";
 
 import { ActionLink, Eyebrow, SectionIntro, TextLink } from "@/components/marketing";
 import {
@@ -20,21 +20,18 @@ import { cn } from "@/lib/utils";
 
 const modes = [
     {
-        icon: ImageIcon,
         title: "Background",
         description: "Identify a beatmap from its background artwork.",
         image: "/products/osuguessr-ghostrule.webp",
         alt: "Anime-style beatmap background used in osu!guessr",
     },
     {
-        icon: Headphones,
         title: "Audio",
         description: "Listen to a short clip and name the beatmap.",
         image: "/products/osuguessr-audio.webp",
         alt: "Bright red and cyan beatmap artwork used in osu!guessr",
     },
     {
-        icon: Paintbrush,
         title: "Skin",
         description: "Recognize an osu! skin from a screenshot.",
         image: "/products/osuguessr-skin.webp",
@@ -47,7 +44,7 @@ export default function OsuGuessr() {
 
     return (
         <ProductPage>
-            <section className="relative min-h-180 overflow-hidden border-b border-border max-[820px]:min-h-170">
+            <section className="relative min-h-130 overflow-hidden border-b border-border max-md:min-h-110">
                 <img
                     className="absolute inset-0 size-full object-cover object-[55%_46%]"
                     src="/products/osuguessr-hero.webp"
@@ -57,14 +54,14 @@ export default function OsuGuessr() {
                     fetchPriority="high"
                 />
                 <div
-                    className="absolute inset-0 bg-[linear-gradient(90deg,rgba(10,9,12,0.97)_0%,rgba(10,9,12,0.82)_41%,rgba(10,9,12,0.18)_75%),linear-gradient(0deg,rgba(10,9,12,0.72),transparent_42%)]"
+                    className="absolute inset-0 bg-[linear-gradient(90deg,rgba(10,9,12,0.97)_0%,rgba(10,9,12,0.82)_41%,rgba(10,9,12,0.18)_75%),linear-gradient(0deg,rgba(10,9,12,0.72),transparent_42%)] max-md:bg-bg/80"
                     aria-hidden="true"
                 />
-                <div className={cn(siteContainerClass, "relative z-20 flex min-h-180 items-center py-20 max-[820px]:min-h-170")}>
+                <div className={cn(siteContainerClass, "relative z-20 flex min-h-130 items-center py-12 max-md:min-h-110")}>
                     <div className={cn(productHeroCopyClass, "max-w-175")}>
                         <Eyebrow>Browser game</Eyebrow>
                         <h1 className={productTitleClass}>{product.name}</h1>
-                        <h2 className={productSubtitleClass}>Guess osu! beatmaps from images and audio.</h2>
+                        <p className={productSubtitleClass}>Guess osu! beatmaps from images and audio.</p>
                         <p className={productBodyClass}>
                             Sign in with osu!, choose a mode, and guess from artwork, audio, or a skin screenshot. Compare your scores and
                             streaks on the leaderboards.
@@ -77,7 +74,7 @@ export default function OsuGuessr() {
                                 <Github aria-hidden="true" /> Source
                             </ActionLink>
                         </HeroActions>
-                        <p className="mt-[1.2rem] text-[0.7rem] text-white/50">
+                        <p className="mt-[1.2rem] text-[0.7rem] text-muted">
                             Background artwork is sourced with the game’s beatmap catalog.
                         </p>
                     </div>
@@ -90,28 +87,20 @@ export default function OsuGuessr() {
                     title="Backgrounds, audio, and skins"
                     body="Choose which kind of clue you want to play with."
                 />
-                <div className="grid grid-cols-1 border-y border-border-strong min-[821px]:grid-cols-3">
-                    {modes.map(({ icon: Icon, title, description, image, alt }) => (
-                        <article
-                            className="group relative min-h-75 overflow-hidden min-[821px]:min-h-85 min-[821px]:border-r last:min-[821px]:border-r-0"
-                            key={title}
-                        >
+                <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+                    {modes.map(({ title, description, image, alt }) => (
+                        <article className="overflow-hidden rounded-md border border-border bg-surface" key={title}>
                             <img
-                                className="absolute inset-0 size-full object-cover transition-transform duration-450 ease-[cubic-bezier(0.2,0.7,0.2,1)] group-hover:scale-[1.025] motion-reduce:transform-none"
+                                className="aspect-video w-full object-cover"
                                 src={image}
                                 alt={alt}
                                 width="1920"
                                 height="1080"
                                 loading="lazy"
                             />
-                            <div
-                                className="absolute inset-0 bg-[linear-gradient(0deg,rgba(8,7,10,0.94)_0%,rgba(8,7,10,0.18)_74%)]"
-                                aria-hidden="true"
-                            />
-                            <div className="absolute inset-x-6 bottom-6 z-20">
-                                <Icon className="mb-[0.8rem] size-5 text-[#d8ccff]" aria-hidden="true" />
-                                <h3 className="text-[1.35rem]">{title}</h3>
-                                <p className="mt-[0.35rem] text-[0.85rem] leading-[1.55] text-[#c5bec9]">{description}</p>
+                            <div className="p-5">
+                                <h3 className="text-xl font-semibold tracking-[-0.02em]">{title}</h3>
+                                <p className="mt-[0.35rem] text-[0.85rem] leading-[1.55] text-muted">{description}</p>
                             </div>
                         </article>
                     ))}
@@ -127,7 +116,7 @@ export default function OsuGuessr() {
                         your history and count toward achievements and rankings.
                     </p>
                 </div>
-                <dl className="grid gap-7 [&_dd]:text-[0.88rem] [&_dd]:leading-[1.55] [&_dd]:text-muted [&_dt]:font-mono [&_dt]:text-[0.74rem] [&_dt]:text-[#d8ccff] [&>div]:grid [&>div]:grid-cols-[5.5rem_1fr] [&>div]:gap-4 min-[601px]:[&>div]:grid-cols-[7rem_1fr]">
+                <dl className="grid gap-7 [&_dd]:text-[0.88rem] [&_dd]:leading-[1.55] [&_dd]:text-muted [&_dt]:text-[0.78rem] [&_dt]:font-medium [&_dt]:text-violet-soft [&>div]:grid [&>div]:grid-cols-[5.5rem_1fr] [&>div]:gap-4 min-xs:[&>div]:grid-cols-[7rem_1fr]">
                     <div>
                         <dt>Classic</dt>
                         <dd>10 rounds with a cumulative score</dd>

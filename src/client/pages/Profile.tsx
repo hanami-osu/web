@@ -164,7 +164,7 @@ export default function Profile() {
                     onUnlink={handleUnlinkProvider}
                 />
 
-                <div className={cn("mt-8 grid items-start gap-6", discordLinked && "min-[1000px]:grid-cols-[minmax(0,1fr)_17rem]")}>
+                <div className={cn("mt-8 grid items-start gap-6", discordLinked && "lg:grid-cols-[minmax(0,1fr)_17rem]")}>
                     {discordLinked && (
                         <BotPreferencesSection
                             settings={settings}

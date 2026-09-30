@@ -4,11 +4,12 @@ import { routes } from "@/client/routes/paths";
 import { AuthLayout, AuthPanel } from "@/components/account/account-shell";
 import { Eyebrow } from "@/components/marketing";
 import { primaryActionClass } from "@/components/ui/action-styles";
+import { revealUpFast } from "@/lib/motion";
 
 export default function LinkErrorPage() {
     return (
         <AuthLayout>
-            <AuthPanel className="animate-[reveal-up_380ms_ease-out_both]">
+            <AuthPanel className={revealUpFast}>
                 <Eyebrow>Link expired</Eyebrow>
                 <h1>Get a new link from Hanami Bot.</h1>
                 <p>

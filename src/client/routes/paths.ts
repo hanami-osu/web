@@ -3,7 +3,6 @@ export const routes = {
     bot: "/bot",
     osuguessr: "/osuguessr",
     companion: "/companion",
-    mapAnalyzer: "/map-analyzer",
     legal: "/legal",
     legalPrivacy: "/legal/privacy",
     legalTerms: "/legal/terms",

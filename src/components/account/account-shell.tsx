@@ -16,7 +16,7 @@ export const profileHeadingClass =
 export const accountPanelClass = "overflow-hidden rounded-md border border-border bg-surface/55";
 
 export const accountPanelHeaderClass =
-    "grid grid-cols-1 gap-2 border-b border-border px-[clamp(1.35rem,3vw,2rem)] py-5 min-[701px]:grid-cols-[minmax(0,1fr)_minmax(14rem,0.8fr)] min-[701px]:items-end min-[701px]:gap-8 [&_h2]:text-[1.25rem] [&_h2]:tracking-[-0.025em] [&_p]:text-[0.8rem] [&_p]:leading-[1.55] [&_p]:text-muted";
+    "grid gap-2 border-b border-border px-[clamp(1.35rem,3vw,2rem)] py-5 [&_h2]:text-[1.25rem] [&_h2]:tracking-[-0.025em] [&_p]:text-[0.8rem] [&_p]:leading-[1.55] [&_p]:text-muted";
 
 export function AccountPage({ children }: { children: ReactNode }) {
     return (
@@ -29,7 +29,7 @@ export function AccountPage({ children }: { children: ReactNode }) {
 }
 
 export function AccountLayout({ children, className }: { children: ReactNode; className?: string }) {
-    return <main className={cn(siteContainerClass, "py-[clamp(4rem,8vw,7rem)]", className)}>{children}</main>;
+    return <main className={cn(siteContainerClass, "py-[clamp(3rem,6vw,5rem)]", className)}>{children}</main>;
 }
 
 export function AccountPageIntro({
@@ -80,12 +80,18 @@ export function AuthLayout({ children }: { children: ReactNode }) {
     );
 }
 
-export function AuthPanel({ children, className, ...props }: React.ComponentPropsWithoutRef<"section">) {
+export function AuthPanel({
+    children,
+    className,
+    width = "wide",
+    ...props
+}: React.ComponentPropsWithoutRef<"section"> & { width?: "compact" | "wide" }) {
     return (
         <section
             {...props}
             className={cn(
                 "w-[min(100%,600px)] rounded-md border border-border bg-surface/60 p-[clamp(1.75rem,5vw,3rem)] [&>h1]:text-[clamp(2.3rem,6vw,4rem)] [&>h1]:leading-[1.02] [&>h1]:tracking-[-0.055em] [&>p:not(:first-child)]:mt-[1.2rem] [&>p:not(:first-child)]:leading-[1.7] [&>p:not(:first-child)]:text-muted",
+                width === "compact" && "w-[min(100%,480px)] p-6 sm:p-8",
                 className,
             )}
         >
