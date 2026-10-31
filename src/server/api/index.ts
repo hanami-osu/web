@@ -6,6 +6,10 @@ import { discordLinkTicketStore } from "../auth";
 import { createDiscordLinkRoutes, productionDiscordLinkRouteDependencies } from "../discord-link/routes";
 
 export const apiRoutes = new Elysia({ prefix: "/api" })
+    .get("/health", ({ set }) => {
+        set.headers["Cache-Control"] = "no-store";
+        return { status: "ok" };
+    })
     .use(accountDeletionRoutes)
     .use(accountRoutes)
     .use(createDiscordLinkRoutes({ ...productionDiscordLinkRouteDependencies, ticketStore: discordLinkTicketStore }))

@@ -11,7 +11,25 @@ import { injectSeoHead } from "./seo";
 const PORT = process.env.PORT ?? 3000;
 const legacyLegalRoutes = new Map<string, string>(Object.entries(legacyRedirects));
 
-const app = new Elysia().use(apiRoutes);
+const securityHeaders = {
+    "Content-Security-Policy": "frame-ancestors 'none'; object-src 'none'; base-uri 'self'",
+    "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+} as const;
+
+const app = new Elysia()
+    .onRequest(({ request, set }) => {
+        for (const [name, value] of Object.entries(securityHeaders)) set.headers[name] = value;
+
+        const url = new URL(request.url);
+        const forwardedProtocol = request.headers.get("x-forwarded-proto");
+        if (url.protocol === "https:" || forwardedProtocol === "https" || process.env.NODE_ENV === "production") {
+            set.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains";
+        }
+    })
+    .use(apiRoutes);
 
 app.all("*", async ({ request, set }) => {
     const url = new URL(request.url);

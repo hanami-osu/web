@@ -20,16 +20,18 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
 
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/src ./src
-COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
-COPY --from=builder /app/prisma/web ./prisma/web
-COPY package.json ./
-COPY tsconfig.json ./
+COPY --from=builder --chown=bun:bun /app/dist ./dist
+COPY --from=builder --chown=bun:bun /app/node_modules ./node_modules
+COPY --from=builder --chown=bun:bun /app/src ./src
+COPY --from=builder --chown=bun:bun /app/prisma.config.ts ./prisma.config.ts
+COPY --from=builder --chown=bun:bun /app/prisma/web ./prisma/web
+COPY --chown=bun:bun package.json ./
+COPY --chown=bun:bun tsconfig.json ./
 
-# Expose the API port
+USER bun
+
 EXPOSE 3000
 
-# Run the Elysia server
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 CMD ["bun", "-e", "fetch('http://127.0.0.1:3000/api/health').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))"]
+
 CMD ["sh", "-c", "bun run db:migrate && bun run db:reconcile-oauth-client && exec bun src/server/index.ts"]

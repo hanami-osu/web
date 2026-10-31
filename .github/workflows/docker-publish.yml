@@ -1,15 +1,65 @@
-name: Publish Docker image
+name: CI and Docker publish
 
 on:
     push:
         branches:
             - main
+    pull_request:
+        branches:
+            - main
     workflow_dispatch:
 
+permissions:
+    contents: read
+
 jobs:
+    checks:
+        name: Check, test, and build
+        runs-on: ubuntu-latest
+        env:
+            WEB_DATABASE_URL: mysql://ci:ci@127.0.0.1:3306/hanami_web
+            BOT_DATABASE_URL: mysql://ci:ci@127.0.0.1:3306/hanami_bot
+            BETTER_AUTH_URL: http://localhost:3000
+            BETTER_AUTH_SECRET: ci-only-better-auth-secret-32-bytes
+            BOT_LINK_SECRET: ci-only-bot-link-secret-32-bytes
+            DISCORD_CLIENT_ID: ci-discord-client
+            DISCORD_CLIENT_SECRET: ci-discord-secret
+            OSU_CLIENT_ID: ci-osu-client
+            OSU_CLIENT_SECRET: ci-osu-secret
+            OSU_GUESSR_CLIENT_ID: ci-guessr-client
+            OSU_GUESSR_REDIRECT_URIS: http://localhost:3000/api/auth/callback/hanami
+        steps:
+            - name: Check out the repo
+              uses: actions/checkout@v4
+
+            - name: Set up Bun
+              uses: oven-sh/setup-bun@v2
+              with:
+                  bun-version: 1.3.14
+
+            - name: Install dependencies
+              run: bun install --frozen-lockfile
+
+            - name: Check formatting
+              run: bun run format:check
+
+            - name: Lint
+              run: bun run lint
+
+            - name: Typecheck
+              run: bun run typecheck
+
+            - name: Test
+              run: bun run test
+
+            - name: Build
+              run: bun run build
+
     push_to_registry:
         name: Push Docker image to Docker Hub
         runs-on: ubuntu-latest
+        needs: checks
+        if: github.ref == 'refs/heads/main' && needs.checks.result == 'success'
         steps:
             - name: Check out the repo
               uses: actions/checkout@v4
@@ -29,4 +79,6 @@ jobs:
                   context: .
                   file: ./Dockerfile
                   push: true
-                  tags: yorunoken/hanami-web:latest
+                  tags: |
+                      yorunoken/hanami-web:latest
+                      yorunoken/hanami-web:sha-${{ github.sha }}

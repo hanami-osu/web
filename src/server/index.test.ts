@@ -50,3 +50,17 @@ describe("Unknown API routes", () => {
         expect(response.status).toBe(404);
     });
 });
+
+describe("Health and security headers", () => {
+    it("returns a non-cacheable liveness response with baseline security headers", async () => {
+        const response = await app.handle(new Request("http://localhost/api/health"));
+
+        expect(response.status).toBe(200);
+        expect(await response.json()).toEqual({ status: "ok" });
+        expect(response.headers.get("cache-control")).toBe("no-store");
+        expect(response.headers.get("content-security-policy")).toContain("frame-ancestors 'none'");
+        expect(response.headers.get("x-content-type-options")).toBe("nosniff");
+        expect(response.headers.get("x-frame-options")).toBe("DENY");
+        expect(response.headers.get("referrer-policy")).toBe("strict-origin-when-cross-origin");
+    });
+});
