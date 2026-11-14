@@ -7,6 +7,7 @@ const redirectUris = ["https://osu-guessr.example.com/auth/hanami/callback", "ht
 describe("osu!guessr OAuth client configuration", () => {
     test("preserves the exact configured HTTPS redirect URI strings", () => {
         const config = getOsuGuessrClientConfig({
+            NODE_ENV: "test",
             OSU_GUESSR_CLIENT_ID: "guessr-client",
             OSU_GUESSR_REDIRECT_URIS: redirectUris.join(","),
         } as NodeJS.ProcessEnv);
@@ -26,11 +27,12 @@ describe("osu!guessr OAuth client configuration", () => {
 
     test("returns null when the client id or redirect URI configuration is missing", () => {
         expect(getOsuGuessrClientConfig({} as NodeJS.ProcessEnv)).toBeNull();
-        expect(getOsuGuessrClientConfig({ OSU_GUESSR_CLIENT_ID: "guessr-client" } as NodeJS.ProcessEnv)).toBeNull();
+        expect(getOsuGuessrClientConfig({ NODE_ENV: "test", OSU_GUESSR_CLIENT_ID: "guessr-client" } as NodeJS.ProcessEnv)).toBeNull();
     });
 
     test("accepts exact loopback HTTP redirect URIs for local development", () => {
         const config = getOsuGuessrClientConfig({
+            NODE_ENV: "test",
             OSU_GUESSR_CLIENT_ID: "guessr-client",
             OSU_GUESSR_REDIRECT_URIS: ["http://localhost/callback", "http://127.0.0.1:4173/callback", "http://[::1]:5173/callback"].join(
                 ",",
@@ -49,6 +51,7 @@ describe("osu!guessr OAuth client configuration", () => {
         ]) {
             expect(
                 getOsuGuessrClientConfig({
+                    NODE_ENV: "test",
                     OSU_GUESSR_CLIENT_ID: "guessr-client",
                     OSU_GUESSR_REDIRECT_URIS: redirectURI,
                 } as NodeJS.ProcessEnv),
@@ -68,10 +71,12 @@ describe("osu!guessr OAuth client configuration", () => {
         };
 
         await reconcileOsuGuessrClient(prisma, {
+            NODE_ENV: "test",
             OSU_GUESSR_CLIENT_ID: "guessr-client",
             OSU_GUESSR_REDIRECT_URIS: redirectUris.join(","),
         } as NodeJS.ProcessEnv);
         await reconcileOsuGuessrClient(prisma, {
+            NODE_ENV: "test",
             OSU_GUESSR_CLIENT_ID: "guessr-client",
             OSU_GUESSR_REDIRECT_URIS: redirectUris.join(","),
         } as NodeJS.ProcessEnv);

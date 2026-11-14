@@ -58,7 +58,7 @@ export default function DataDeletion() {
             <LegalSection id="immediate" title="2. Delete your account">
                 <ol>
                     <li>
-                        Open <PrefetchLink to={routes.profilePrivacy}>account privacy</PrefetchLink> and review the signed-in account.
+                        Open <PrefetchLink href={routes.profilePrivacy}>account privacy</PrefetchLink> and review the signed-in account.
                     </li>
                     <li>Choose delete account. Hanami requires a Discord sign-in from approximately the last 15 minutes.</li>
                     <li>

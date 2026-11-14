@@ -1,6 +1,6 @@
-import { Bot as BotIcon, Github, Link2, SlidersHorizontal } from "lucide-react";
+import { Github } from "lucide-react";
 
-import { ActionLink, Eyebrow, SectionIntro, TextLink } from "@/components/marketing";
+import { ActionLink, SectionIntro, TextLink } from "@/components/marketing";
 import {
     HeroActions,
     ProductFootnote,
@@ -12,14 +12,11 @@ import {
     ProductSteps,
     productBodyClass,
     productHeroCopyClass,
-    productSubtitleClass,
     productTitleClass,
     sectionBodyClass,
     sectionHeadingClass,
 } from "@/components/product/product-layout";
 import { getProduct } from "@/data/site-config";
-import { revealUpLate } from "@/lib/motion";
-import { cn } from "@/lib/utils";
 
 const commands = [
     ["/profile", "Player profiles", "Rank, accuracy, play count, country, and account details."],
@@ -35,25 +32,23 @@ export default function Bot() {
 
     return (
         <ProductPage>
-            <ProductHero tone="rose">
+            <ProductHero>
                 <div className={productHeroCopyClass}>
-                    <Eyebrow>Discord bot</Eyebrow>
                     <h1 className={productTitleClass}>{product.name}</h1>
-                    <p className={productSubtitleClass}>Your osu! scores, right in Discord.</p>
                     <p className={productBodyClass}>
                         Look up players, scores, and beatmaps inside Discord. Link an osu! account once to use your own profile as the
                         default in supported commands.
                     </p>
                     <HeroActions>
                         <ActionLink href={product.links.primary} external>
-                            <BotIcon aria-hidden="true" /> Add to Discord
+                            Add to Discord
                         </ActionLink>
                         <ActionLink href={product.links.source} variant="secondary" external>
                             <Github aria-hidden="true" /> Source
                         </ActionLink>
                     </HeroActions>
                 </div>
-                <figure className={cn("hidden text-center md:block", revealUpLate)}>
+                <figure className="hidden text-center md:block">
                     <img
                         className="mx-auto w-[min(100%,340px)]"
                         src="/hanami-transparent.png"
@@ -65,15 +60,11 @@ export default function Bot() {
             </ProductHero>
 
             <ProductSection aria-labelledby="bot-commands-title">
-                <SectionIntro
-                    eyebrow="Commands"
-                    title="Player, score, and beatmap commands"
-                    body="Use these commands in your Discord server."
-                />
-                <div className="grid gap-x-10 md:grid-cols-2" id="bot-commands-title">
+                <SectionIntro title="Commands" />
+                <div className="grid gap-x-6 md:grid-cols-2" id="bot-commands-title">
                     {commands.map(([command, title, description]) => (
                         <article
-                            className="grid grid-cols-[6rem_1fr] items-start gap-4 border-t border-border py-5 max-xs:grid-cols-1 max-xs:gap-2"
+                            className="grid grid-cols-[6rem_1fr] items-start gap-4 border-t border-border py-4 max-xs:grid-cols-1 max-xs:gap-2"
                             key={command}
                         >
                             <code className="font-mono text-[0.86rem] text-accent-soft">{command}</code>
@@ -88,28 +79,27 @@ export default function Bot() {
 
             <ProductSplit>
                 <div>
-                    <Eyebrow>Optional account link</Eyebrow>
                     <h2 className={sectionHeadingClass}>Link your osu! account</h2>
                     <p className={sectionBodyClass}>
                         Run <code>/link</code> in your Discord server for a private, one-time link, or sign in with Discord and connect your
                         osu! account from your Hanami Web profile. You can also change the bot’s display settings there.
                     </p>
-                    <TextLink className="mt-[1.8rem]" href="/profile">
+                    <TextLink className="mt-3" href="/profile">
                         Open account settings
                     </TextLink>
                 </div>
                 <ProductSteps>
-                    <ProductStep icon={<Link2 aria-hidden="true" />}>
+                    <ProductStep>
                         <strong>Connect</strong>
                         <p>
                             Link from Discord with <code>/link</code> or connect your osu! account in your web profile.
                         </p>
                     </ProductStep>
-                    <ProductStep icon={<SlidersHorizontal aria-hidden="true" />}>
+                    <ProductStep>
                         <strong>Choose defaults</strong>
                         <p>Set game mode, score source, embed size, and embed style.</p>
                     </ProductStep>
-                    <ProductStep icon={<BotIcon aria-hidden="true" />}>
+                    <ProductStep>
                         <strong>Use commands</strong>
                         <p>Player commands use your linked osu! account by default.</p>
                     </ProductStep>

@@ -1,6 +1,8 @@
+"use client";
+
 import { Menu, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { usePathname } from "next/navigation";
 
 import { routes } from "@/client/routes/paths";
 import { siteContainerClass } from "@/components/layout/styles";
@@ -14,7 +16,7 @@ export default function Header() {
     const [menuOpen, setMenuOpen] = useState(false);
     const headerRef = useRef<HTMLElement>(null);
     const menuButtonRef = useRef<HTMLButtonElement>(null);
-    const { pathname } = useLocation();
+    const pathname = usePathname();
 
     useEffect(() => {
         setMenuOpen(false);
@@ -41,33 +43,33 @@ export default function Header() {
     }, [menuOpen]);
 
     return (
-        <header ref={headerRef} className="sticky top-0 isolate z-50 h-18 border-b border-border bg-bg/95 backdrop-blur-xl print:hidden">
+        <header ref={headerRef} className="sticky top-0 isolate z-50 h-[65px] border-b border-border bg-bg print:hidden">
             <div className={cn(siteContainerClass, "flex h-full items-center gap-6")}>
                 <PrefetchLink
-                    to={routes.home}
+                    href={routes.home}
                     prefetch="none"
-                    className="inline-flex shrink-0 items-center gap-[0.65rem] text-[0.95rem] font-extrabold tracking-[-0.02em] text-white no-underline"
+                    className="inline-flex shrink-0 items-center gap-2 font-display text-xl font-bold tracking-[-0.03em] text-accent no-underline transition-colors hover:text-accent-soft sm:text-2xl"
                     aria-label="Hanami home"
                 >
-                    <img className="size-9.5 object-contain" src="/hanami-transparent.png" alt="" width="42" height="42" />
+                    <img className="size-8 object-contain" src="/hanami-transparent.png" alt="" width="42" height="42" />
                     <span>Hanami</span>
                 </PrefetchLink>
 
-                <nav className="ml-auto hidden items-center gap-6 md:flex" aria-label="Primary navigation">
+                <nav className="hidden h-full items-center gap-7 md:flex" aria-label="Primary navigation">
                     {navigation.map((item) => (
                         <PrefetchLink
                             key={item.to}
-                            to={item.to}
+                            href={item.to}
                             prefetch="intent"
                             aria-current={pathname === item.to ? "page" : undefined}
-                            className="relative py-6 text-[0.82rem] font-semibold whitespace-nowrap text-muted no-underline transition-colors duration-150 after:absolute after:inset-x-0 after:bottom-[0.95rem] after:h-px after:origin-left after:scale-x-0 after:bg-current after:transition-transform after:duration-150 hover:text-white hover:after:scale-x-100 aria-[current=page]:text-white aria-[current=page]:after:scale-x-100"
+                            className="relative inline-flex h-full items-center text-[0.95rem] font-medium whitespace-nowrap text-body no-underline transition-colors duration-150 after:absolute after:inset-x-0 after:bottom-3 after:h-px after:origin-left after:scale-x-0 after:bg-accent after:transition-transform after:duration-150 hover:text-accent-soft hover:after:scale-x-100 aria-[current=page]:text-accent-soft aria-[current=page]:after:scale-x-100"
                         >
                             {item.label}
                         </PrefetchLink>
                     ))}
                 </nav>
 
-                <div className="ml-auto flex items-center gap-1.5 md:ml-0">
+                <div className="ml-auto flex items-center gap-1.5">
                     <ProfileAction mobileNavigationOpen={menuOpen} onMenuOpen={() => setMenuOpen(false)} />
                     <button
                         ref={menuButtonRef}
@@ -86,7 +88,7 @@ export default function Header() {
             <nav
                 id="mobile-navigation"
                 className={cn(
-                    "absolute inset-x-0 top-18 max-h-[calc(100dvh-72px)] overflow-y-auto border-b border-border bg-bg px-4 py-4 shadow-xl md:hidden",
+                    "absolute inset-x-0 top-full max-h-[calc(100dvh-65px)] overflow-y-auto border-b border-border bg-bg px-4 py-4 md:hidden",
                     navIn,
                 )}
                 aria-label="Mobile navigation"
@@ -95,7 +97,7 @@ export default function Header() {
                 <div className="mx-auto max-w-180">
                     <PrefetchLink
                         className="flex min-h-12 items-center rounded-sm px-3 text-base font-medium text-muted no-underline hover:bg-surface hover:text-white aria-[current=page]:bg-surface aria-[current=page]:text-accent-soft"
-                        to={routes.home}
+                        href={routes.home}
                         prefetch="none"
                         aria-current={pathname === routes.home ? "page" : undefined}
                         onClick={() => setMenuOpen(false)}
@@ -108,7 +110,7 @@ export default function Header() {
                         <PrefetchLink
                             className="flex min-h-12 items-center rounded-sm px-3 text-base font-medium text-muted no-underline hover:bg-surface hover:text-white aria-[current=page]:bg-surface aria-[current=page]:text-accent-soft"
                             key={item.to}
-                            to={item.to}
+                            href={item.to}
                             prefetch="intent"
                             aria-current={pathname === item.to ? "page" : undefined}
                             onClick={() => setMenuOpen(false)}

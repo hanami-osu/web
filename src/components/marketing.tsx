@@ -22,12 +22,7 @@ interface ActionLinkProps {
 
 export function ActionLink({ children, className, href, variant = "primary", external = false, prefetch = "intent" }: ActionLinkProps) {
     const classes = cn(primaryActionClass, actionVariants[variant], className);
-    const content = (
-        <>
-            <span>{children}</span>
-            {external ? <ArrowUpRight aria-hidden="true" /> : <ArrowRight aria-hidden="true" />}
-        </>
-    );
+    const content = <span>{children}</span>;
 
     if (external) {
         return (
@@ -46,7 +41,7 @@ export function ActionLink({ children, className, href, variant = "primary", ext
     }
 
     return (
-        <PrefetchLink className={classes} to={href} prefetch={prefetch}>
+        <PrefetchLink className={classes} href={href} prefetch={prefetch}>
             {content}
         </PrefetchLink>
     );
@@ -56,12 +51,11 @@ export function Eyebrow({ children, className }: { children: ReactNode; classNam
     return <p className={cn("mb-3 text-[0.82rem] leading-normal font-medium text-accent-soft", className)}>{children}</p>;
 }
 
-export function SectionIntro({ eyebrow, title, body }: { eyebrow: string; title: string; body?: string }) {
+export function SectionIntro({ title, body }: { title: string; body?: string }) {
     return (
         <header className="mb-8 max-w-180">
-            <Eyebrow>{eyebrow}</Eyebrow>
             <h2 className={sectionHeadingClass}>{title}</h2>
-            {body && <p className={cn("mt-5", sectionBodyClass)}>{body}</p>}
+            {body && <p className={sectionBodyClass}>{body}</p>}
         </header>
     );
 }
@@ -80,7 +74,7 @@ export function TextLink({
     prefetch?: PrefetchMode;
 }) {
     const classes = cn(
-        "inline-flex min-h-11 w-fit items-center gap-[0.55rem] text-[0.86rem] font-semibold text-accent-soft no-underline transition-colors duration-150 hover:text-white [&_svg]:size-4",
+        "inline-flex min-h-9 w-fit items-center gap-2 text-sm font-medium text-accent-soft no-underline transition-colors duration-150 hover:text-white [&_svg]:size-4",
         className,
     );
     const content = (
@@ -99,7 +93,7 @@ export function TextLink({
     }
 
     return (
-        <PrefetchLink className={classes} to={href} prefetch={prefetch}>
+        <PrefetchLink className={classes} href={href} prefetch={prefetch}>
             {content}
         </PrefetchLink>
     );

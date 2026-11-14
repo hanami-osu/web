@@ -1,6 +1,5 @@
 import { describe, expect, it } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
-import { MemoryRouter } from "react-router-dom";
 
 import { describeOAuthError } from "@/client/lib/auth-navigation";
 import { LoginPanel } from "./Login";
@@ -42,9 +41,5 @@ describe("fallback login panel", () => {
 });
 
 function renderPanel(error: string | null, status?: string, mode: "general" | "osu" = "general"): string {
-    return renderToStaticMarkup(
-        <MemoryRouter>
-            <LoginPanel error={error} status={status} mode={mode} redirectingProvider={null} onSignIn={() => {}} />
-        </MemoryRouter>,
-    );
+    return renderToStaticMarkup(<LoginPanel error={error} status={status} mode={mode} redirectingProvider={null} onSignIn={() => {}} />);
 }

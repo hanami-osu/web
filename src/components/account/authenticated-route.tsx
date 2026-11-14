@@ -1,4 +1,7 @@
-import { Navigate, Outlet, useLocation, useOutletContext } from "react-router-dom";
+"use client";
+
+import { createContext, useContext, useEffect, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
 
 import { useSession } from "@/client/lib/auth";
 import { createProtectedLoginPath } from "@/client/lib/auth-navigation";
@@ -6,15 +9,28 @@ import { AccountLayout, AccountPage, profileLayoutClass } from "@/components/acc
 import { Eyebrow } from "@/components/marketing";
 
 type AuthenticatedSession = NonNullable<ReturnType<typeof useSession>["data"]>;
+const AuthenticatedSessionContext = createContext<AuthenticatedSession | null>(null);
 
-export default function AuthenticatedRoute() {
+export default function AuthenticatedRoute({ children }: { children: ReactNode }) {
     const { data: session, isPending } = useSession();
-    const location = useLocation();
+    const router = useRouter();
+
+    useEffect(() => {
+        if (isPending || session) return;
+
+        router.replace(
+            createProtectedLoginPath({
+                pathname: window.location.pathname,
+                search: window.location.search,
+                hash: window.location.hash,
+            }),
+        );
+    }, [isPending, router, session]);
 
     if (isPending) {
         return (
             <AccountPage>
-                <AccountLayout className={`${profileLayoutClass} min-h-[calc(100svh-72px)]`}>
+                <AccountLayout className={`${profileLayoutClass} min-h-[calc(100svh-60px)]`}>
                     <section className="max-w-220" role="status" aria-label="Loading account" aria-busy="true">
                         <span className="sr-only">Loading account</span>
                         <Eyebrow>Account</Eyebrow>
@@ -42,11 +58,13 @@ export default function AuthenticatedRoute() {
         );
     }
 
-    if (!session) return <Navigate to={createProtectedLoginPath(location)} replace />;
+    if (!session) return null;
 
-    return <Outlet context={session} />;
+    return <AuthenticatedSessionContext.Provider value={session}>{children}</AuthenticatedSessionContext.Provider>;
 }
 
 export function useAuthenticatedSession(): AuthenticatedSession {
-    return useOutletContext<AuthenticatedSession>();
+    const session = useContext(AuthenticatedSessionContext);
+    if (!session) throw new Error("Authenticated session is unavailable outside an authenticated route.");
+    return session;
 }

@@ -45,7 +45,7 @@ export function ConfirmationPage({
                     <>
                         {error && <ErrorMessage>{error}</ErrorMessage>}
                         <p>This confirmation is missing, expired, or was opened under a different account.</p>
-                        <PrefetchLink className={cn(primaryActionClass, "primary-action mt-6")} to={routes.profilePrivacy}>
+                        <PrefetchLink className={cn(primaryActionClass, "primary-action mt-6")} href={routes.profilePrivacy}>
                             Start again
                         </PrefetchLink>
                     </>

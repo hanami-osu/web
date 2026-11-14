@@ -1,13 +1,23 @@
-import { ArrowRight } from "lucide-react";
-
 import Footer from "@/components/footer";
 import Header from "@/components/header";
-import { displayClass, sectionHeadingClass, sectionSpacingClass, siteContainerClass, sitePageClass } from "@/components/layout/styles";
-import { ActionLink, Eyebrow, TextLink } from "@/components/marketing";
+import {
+    displayClass,
+    heroMinHeightClass,
+    sectionHeadingClass,
+    sectionSpacingClass,
+    siteContainerClass,
+    sitePageClass,
+} from "@/components/layout/styles";
+import { ActionLink, TextLink } from "@/components/marketing";
 import { PrefetchLink } from "@/components/navigation/prefetch-link";
-import { primaryActionClass, secondaryActionClass } from "@/components/ui/action-styles";
 import { products, siteConfig } from "@/data/site-config";
 import { cn } from "@/lib/utils";
+
+const productArtwork = {
+    bot: { src: "/hanami.webp", className: "object-cover object-center" },
+    osuguessr: { src: "/products/osuguessr-hero.webp", className: "object-cover object-center" },
+    companion: { src: "/products/companion-icon.png", className: "object-contain p-8" },
+} as const;
 
 export default function Home() {
     return (
@@ -16,35 +26,37 @@ export default function Home() {
             <main>
                 <section className="relative overflow-hidden border-b border-border">
                     <img
-                        className="absolute inset-0 size-full object-cover opacity-40"
+                        className="absolute inset-0 size-full object-cover opacity-45"
                         src="/background.webp"
                         alt=""
                         width="2560"
                         height="1709"
                         fetchPriority="high"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-r from-bg via-bg/65 to-bg/25" aria-hidden="true" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-bg via-bg/85 to-bg/40" aria-hidden="true" />
                     <div
                         className={cn(
                             siteContainerClass,
-                            "relative grid items-center gap-10 py-14 md:min-h-120 md:grid-cols-[1fr_0.65fr] md:py-16",
+                            heroMinHeightClass,
+                            "relative grid items-center gap-10 py-14 md:grid-cols-[1fr_0.65fr] md:py-16",
                         )}
                     >
-                        <div className="max-w-170">
-                            <h1 className={displayClass}>More ways to enjoy osu!</h1>
-                            <p className="mt-5 max-w-[48ch] text-lg leading-relaxed text-muted">
-                                Look up scores in Discord, test your beatmap knowledge, or explore our desktop app. Find the Hanami project
-                                for you.
+                        <div className="relative z-10 max-w-170">
+                            <h1 className={displayClass}>Hanami</h1>
+                            <p className="mt-4 max-w-[48ch] text-sm leading-relaxed text-muted sm:text-base">
+                                osu! projects by yorunoken: a Discord bot, a beatmap guessing game, and a desktop app in development.
                             </p>
-                            <div className="mt-7 flex flex-wrap gap-3 max-xs:flex-col">
-                                <ActionLink href="#projects">Explore projects</ActionLink>
-                                <ActionLink href={siteConfig.links.community} variant="secondary" external>
-                                    Join the community
+                            <div className="mt-6 flex flex-wrap gap-3 max-xs:flex-col">
+                                <ActionLink href={siteConfig.links.community} external>
+                                    Discord server
+                                </ActionLink>
+                                <ActionLink href={siteConfig.links.organization} variant="secondary" external>
+                                    GitHub
                                 </ActionLink>
                             </div>
                         </div>
                         <img
-                            className="mx-auto hidden w-full max-w-85 md:block"
+                            className="mx-auto hidden w-full max-w-75 md:block"
                             src="/hanami-transparent.png"
                             alt=""
                             width="565"
@@ -54,59 +66,57 @@ export default function Home() {
                 </section>
 
                 <section className={cn(siteContainerClass, sectionSpacingClass)} id="projects" aria-labelledby="projects-title">
-                    <header className="mb-8">
+                    <header className="mb-5">
                         <h2 className={sectionHeadingClass} id="projects-title">
-                            Choose a project
+                            Projects
                         </h2>
-                        <p className="mt-3 text-base leading-relaxed text-muted">Each project has its own place to play or get started.</p>
                     </header>
-                    <div className="grid gap-4 md:grid-cols-3">
+                    <div className="grid gap-6 md:grid-cols-3 md:gap-5">
                         {products.map((product) => (
                             <PrefetchLink
-                                className="group flex flex-col rounded-md border border-border bg-surface p-6 no-underline transition-colors duration-150 hover:border-border-strong focus-visible:outline-offset-4"
+                                className="group flex flex-col rounded-lg no-underline focus-visible:outline-offset-4"
                                 key={product.key}
-                                to={product.route}
+                                href={product.route}
                                 prefetch="intent-and-viewport"
                             >
-                                <p className="text-sm text-accent-soft">
+                                <div className="aspect-video overflow-hidden rounded-lg border border-border bg-surface">
+                                    <img
+                                        className={cn("size-full", productArtwork[product.key].className)}
+                                        src={productArtwork[product.key].src}
+                                        alt=""
+                                        loading="lazy"
+                                    />
+                                </div>
+                                <h3 className="mt-3 text-base font-semibold tracking-tight text-text transition-colors group-hover:text-accent-soft">
+                                    {product.name}
+                                </h3>
+                                <p className="mt-1 text-sm leading-relaxed text-muted">{product.description}</p>
+                                <p className="mt-2 text-xs text-muted">
                                     {product.category}
                                     {product.key === "companion" && " · In development"}
                                 </p>
-                                <h3 className="mt-3 text-2xl font-semibold tracking-[-0.02em] text-white">{product.name}</h3>
-                                <p className="mt-3 mb-6 text-[0.95rem] leading-relaxed text-muted">{product.description}</p>
-                                <span
-                                    className={cn(primaryActionClass, secondaryActionClass, "mt-auto w-full group-hover:border-white/40")}
-                                >
-                                    <span>{product.action}</span>
-                                    <ArrowRight
-                                        aria-hidden="true"
-                                        className="transition-transform duration-150 group-hover:translate-x-0.5"
-                                    />
-                                </span>
                             </PrefetchLink>
                         ))}
                     </div>
                 </section>
 
-                <section className="border-t border-border bg-surface/50">
-                    <div className={cn(siteContainerClass, sectionSpacingClass, "grid gap-10 md:grid-cols-2 md:gap-16")}>
-                        <div>
-                            <Eyebrow>Open source</Eyebrow>
-                            <h2 className={sectionHeadingClass}>Built in the open</h2>
-                            <p className="mt-3 max-w-[52ch] text-base leading-relaxed text-muted">
+                <section className={cn(siteContainerClass, "pb-10")}>
+                    <div className="grid overflow-hidden rounded-lg border border-border bg-surface/35 md:grid-cols-2">
+                        <div className="border-b border-border p-5 md:border-r md:border-b-0">
+                            <h2 className={sectionHeadingClass}>Open source</h2>
+                            <p className="mt-2 max-w-[52ch] text-sm leading-relaxed text-muted">
                                 Read the code, report a bug, or contribute to the projects on GitHub.
                             </p>
-                            <TextLink className="mt-5" href={siteConfig.links.organization} external>
+                            <TextLink className="mt-2" href={siteConfig.links.organization} external>
                                 Browse repositories
                             </TextLink>
                         </div>
-                        <div>
-                            <Eyebrow>Support the project</Eyebrow>
+                        <div className="p-5">
                             <h2 className={sectionHeadingClass}>Support Hanami</h2>
-                            <p className="mt-3 max-w-[52ch] text-base leading-relaxed text-muted">
-                                Enjoy using Hanami? Contributions through GitHub Sponsors help cover hosting and maintenance.
+                            <p className="mt-2 max-w-[52ch] text-sm leading-relaxed text-muted">
+                                GitHub Sponsors contributions cover hosting and maintenance.
                             </p>
-                            <TextLink className="mt-5" href={siteConfig.links.support} external>
+                            <TextLink className="mt-2" href={siteConfig.links.support} external>
                                 Sponsor on GitHub
                             </TextLink>
                         </div>

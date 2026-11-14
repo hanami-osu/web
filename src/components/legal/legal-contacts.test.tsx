@@ -1,6 +1,5 @@
 import { describe, expect, it } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
-import { MemoryRouter } from "react-router-dom";
 
 import CookiePolicy from "./cookie-policy";
 import DataDeletion from "./data-deletion";
@@ -119,9 +118,5 @@ describe("legal contacts and request links", () => {
 });
 
 function render(Component: () => React.JSX.Element): string {
-    return renderToStaticMarkup(
-        <MemoryRouter>
-            <Component />
-        </MemoryRouter>,
-    );
+    return renderToStaticMarkup(<Component />);
 }

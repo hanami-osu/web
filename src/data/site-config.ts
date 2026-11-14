@@ -25,7 +25,6 @@ export interface ProductSummary {
     route: InternalRoutePath;
     category: string;
     description: string;
-    action: string;
     tone: "rose" | "violet" | "cyan" | "lime";
     links: {
         primary: string;
@@ -41,7 +40,6 @@ export const products: readonly ProductSummary[] = [
         route: routes.bot,
         category: "Discord bot",
         description: "Profiles, recent plays, top scores, beatmaps, and performance tools inside Discord.",
-        action: "View Hanami Bot",
         tone: "rose",
         links: {
             primary:
@@ -55,7 +53,6 @@ export const products: readonly ProductSummary[] = [
         route: routes.osuguessr,
         category: "Browser game",
         description: "Identify beatmaps from their backgrounds, audio clips, or skin screenshots.",
-        action: "View osu!guessr",
         tone: "violet",
         links: {
             primary: "https://osuguessr.com",
@@ -68,7 +65,6 @@ export const products: readonly ProductSummary[] = [
         route: routes.companion,
         category: "Desktop app",
         description: "An osu! desktop app for tracking plays through tosu. Still in development.",
-        action: "See the prototype",
         tone: "cyan",
         links: {
             primary: "https://github.com/hanami-osu/companion",
@@ -109,7 +105,7 @@ export const routeMetadata = {
     },
     "/osuguessr": {
         title: "osu!guessr | Hanami",
-        description: "Identify osu! beatmaps from backgrounds, audio clips, and skin screenshots in classic or death mode.",
+        description: "Identify osu! beatmaps from backgrounds, audio clips, and skin screenshots in Classic or Survival.",
         indexable: true,
         socialImage: "/products/osuguessr-hero.webp",
     },

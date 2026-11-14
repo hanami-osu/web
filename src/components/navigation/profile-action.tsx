@@ -1,6 +1,8 @@
+"use client";
+
 import { ChevronDown, LogIn, LogOut, Shield, UserRound } from "lucide-react";
 import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { usePathname, useRouter } from "next/navigation";
 
 import { claimPendingAttempt, signOutFromHanami, useSession } from "@/client/lib/auth";
 import { routes } from "@/client/routes/paths";
@@ -22,19 +24,19 @@ export default function ProfileAction({
     onMenuOpen?: () => void;
 }) {
     const { data: session, isPending } = useSession();
-    const navigate = useNavigate();
-    const location = useLocation();
+    const router = useRouter();
+    const pathname = usePathname();
 
     async function handleSignOut() {
         await signOutFromHanami();
-        navigate(routes.home, { replace: true });
+        router.replace(routes.home);
     }
 
     return (
         <ProfileActionView
             session={session}
             isPending={isPending}
-            routeKey={`${location.pathname}${location.search}`}
+            routeKey={pathname}
             mobileNavigationOpen={mobileNavigationOpen}
             onSignOut={handleSignOut}
             onMenuOpen={onMenuOpen}
@@ -163,8 +165,11 @@ export function ProfileActionView({
         return (
             <div className={controlFrameClass}>
                 <PrefetchLink
-                    className={cn(accountActionClass, "w-full border-0 bg-transparent px-2 whitespace-nowrap")}
-                    to={routes.login}
+                    className={cn(
+                        accountActionClass,
+                        "min-h-9 rounded-md border-0 bg-accent px-4 text-sm font-medium whitespace-nowrap text-ink hover:bg-accent-strong hover:text-ink [&_svg]:size-4",
+                    )}
+                    href={routes.login}
                     prefetch="intent"
                     aria-label="Sign in to Hanami"
                 >
@@ -217,7 +222,7 @@ export function ProfileActionView({
                     ref={menuRef}
                     id="account-menu"
                     className={cn(
-                        "absolute top-[calc(100%+0.75rem)] right-0 z-50 w-72 max-w-[calc(100vw-2rem)] origin-top-right border border-border-strong bg-surface-strong shadow-[0_22px_60px_rgba(0,0,0,0.44)]",
+                        "absolute top-[calc(100%+0.75rem)] right-0 z-50 w-72 max-w-[calc(100vw-2rem)] origin-top-right border border-border-strong bg-surface-strong",
                         navInFast,
                     )}
                     role="menu"
@@ -226,7 +231,7 @@ export function ProfileActionView({
                 >
                     <PrefetchLink
                         className={menuItemClass}
-                        to={routes.profile}
+                        href={routes.profile}
                         prefetch="intent"
                         role="menuitem"
                         onClick={() => closeMenu({ restoreFocus: true })}
@@ -235,7 +240,7 @@ export function ProfileActionView({
                     </PrefetchLink>
                     <PrefetchLink
                         className={menuItemClass}
-                        to={routes.profilePrivacy}
+                        href={routes.profilePrivacy}
                         prefetch="intent"
                         role="menuitem"
                         onClick={() => closeMenu({ restoreFocus: true })}

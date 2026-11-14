@@ -262,7 +262,7 @@ export function AccountPrivacyAside({ compact = false }: { compact?: boolean }) 
                 <p className="max-w-[52ch] text-[0.84rem] leading-[1.65] text-muted">
                     Includes account deletion, unlinking, and other privacy requests.
                 </p>
-                <PrefetchLink className={cn(primaryActionClass, secondaryActionClass, compactActionClass)} to={routes.profilePrivacy}>
+                <PrefetchLink className={cn(primaryActionClass, secondaryActionClass, compactActionClass)} href={routes.profilePrivacy}>
                     Open privacy settings
                 </PrefetchLink>
             </div>

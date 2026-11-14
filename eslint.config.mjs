@@ -3,12 +3,12 @@ import tseslint from "typescript-eslint";
 
 export default tseslint.config(
     {
-        ignores: ["dist/**", "node_modules/**"],
+        ignores: ["dist/**", ".next/**", "node_modules/**", "src/generated/**"],
     },
     eslint.configs.recommended,
     ...tseslint.configs.recommended,
     {
-        files: ["src/**/*.{ts,tsx}", "vite.config.ts"],
+        files: ["src/**/*.{ts,tsx}", "next.config.ts"],
         rules: {
             "no-undef": "off",
         },

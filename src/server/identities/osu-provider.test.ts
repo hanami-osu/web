@@ -5,6 +5,7 @@ import { createOsuOAuthProvider, mapOsuProfileToUser, parseOsuProfile } from "./
 describe("osu! Better Auth provider", () => {
     it("uses the exact osu provider id, identify scope, and PKCE", () => {
         const config = createOsuOAuthProvider({
+            NODE_ENV: "test",
             OSU_AUTH_CLIENT_ID: "client-id",
             OSU_AUTH_CLIENT_SECRET: "client-secret",
         } as NodeJS.ProcessEnv);
@@ -51,6 +52,7 @@ describe("osu! Better Auth provider", () => {
         );
         const config = createOsuOAuthProvider(
             {
+                NODE_ENV: "test",
                 OSU_AUTH_CLIENT_ID: "client-id",
                 OSU_AUTH_CLIENT_SECRET: "client-secret",
             } as NodeJS.ProcessEnv,

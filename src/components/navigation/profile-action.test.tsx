@@ -1,6 +1,5 @@
 import { describe, expect, it } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
-import { MemoryRouter } from "react-router-dom";
 
 import { getNextMenuItemIndex, ProfileActionView, type HeaderSession } from "./profile-action";
 
@@ -58,8 +57,6 @@ describe("header account control", () => {
 
 function render({ session: currentSession, isPending }: { session: HeaderSession | null; isPending: boolean }): string {
     return renderToStaticMarkup(
-        <MemoryRouter>
-            <ProfileActionView session={currentSession} isPending={isPending} routeKey="/" onSignOut={async () => {}} />
-        </MemoryRouter>,
+        <ProfileActionView session={currentSession} isPending={isPending} routeKey="/" onSignOut={async () => {}} />,
     );
 }

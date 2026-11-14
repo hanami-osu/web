@@ -141,6 +141,10 @@ export default function PrivacyPolicy() {
                 <ul>
                     <li>osu! user ID, username, and avatar URL received at sign-in, plus an authentication-session cookie.</li>
                     <li>
+                        Sign-in to osu!guessr runs through Hanami Web. Signing in for the first time also creates a Hanami Web account that
+                        holds the osu! identity data listed above for Hanami Web.
+                    </li>
+                    <li>
                         Completed game records and derived statistics: mode, variant, points, streaks, totals, games played, achievements,
                         and play times. Profiles and leaderboards make some of this information public.
                     </li>

@@ -1,6 +1,5 @@
 import { describe, expect, it } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
-import { MemoryRouter } from "react-router-dom";
 
 import { OsuOAuthContinuationPanel } from "./OsuOAuthContinuation";
 
@@ -31,9 +30,5 @@ describe("osu OAuth continuation", () => {
 });
 
 function render(props: React.ComponentProps<typeof OsuOAuthContinuationPanel>): string {
-    return renderToStaticMarkup(
-        <MemoryRouter>
-            <OsuOAuthContinuationPanel {...props} />
-        </MemoryRouter>,
-    );
+    return renderToStaticMarkup(<OsuOAuthContinuationPanel {...props} />);
 }

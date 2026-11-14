@@ -57,7 +57,7 @@ export default function LegalIndex() {
                         <PrefetchLink
                             className="group flex min-h-42 flex-col justify-between bg-surface/65 p-5 no-underline transition-colors hover:bg-surface md:p-6"
                             key={path}
-                            to={path}
+                            href={path}
                             prefetch="intent"
                         >
                             <span>
@@ -139,7 +139,7 @@ export default function LegalIndex() {
                             <dd className="mt-2 text-[0.82rem] text-white">
                                 <PrefetchLink
                                     className="underline decoration-white/45 underline-offset-[0.25em]"
-                                    to={routes.profilePrivacy}
+                                    href={routes.profilePrivacy}
                                 >
                                     Open account privacy
                                 </PrefetchLink>
@@ -164,7 +164,7 @@ export default function LegalIndex() {
                         <PrefetchLink
                             className="group flex items-center justify-between gap-4 rounded-md border border-border bg-surface/35 p-4 no-underline transition-colors hover:border-border-strong hover:bg-surface"
                             key={document.path}
-                            to={document.path}
+                            href={document.path}
                             prefetch="intent"
                         >
                             <span>

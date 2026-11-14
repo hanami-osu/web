@@ -7,20 +7,20 @@ import { products, siteConfig } from "@/data/site-config";
 import { cn } from "@/lib/utils";
 
 const footerLinkClass =
-    "inline-flex min-h-11 items-center gap-[0.3rem] text-sm text-muted no-underline transition-colors hover:text-white [&_svg]:size-3.25";
+    "inline-flex min-h-8 items-center gap-[0.3rem] text-sm text-muted no-underline transition-colors hover:text-white [&_svg]:size-3.25";
 
 export default function Footer() {
     return (
         <footer className="border-t border-border bg-bg-sunken print:hidden">
-            <div className={cn(siteContainerClass, "grid gap-8 py-10 lg:grid-cols-[minmax(260px,0.8fr)_minmax(430px,1fr)]")}>
+            <div className={cn(siteContainerClass, "grid gap-8 py-8 lg:grid-cols-[minmax(260px,0.8fr)_minmax(430px,1fr)]")}>
                 <div>
                     <PrefetchLink
-                        className="inline-flex items-center gap-3 text-xl font-extrabold no-underline"
-                        to={routes.home}
+                        className="inline-flex items-center gap-2 font-display text-lg font-bold text-accent no-underline"
+                        href={routes.home}
                         prefetch="none"
                         aria-label="Hanami home"
                     >
-                        <img className="size-12 object-contain" src="/hanami-transparent.png" alt="" width="54" height="54" />
+                        <img className="size-10 object-contain" src="/hanami-transparent.png" alt="" width="54" height="54" />
                         <span>Hanami</span>
                     </PrefetchLink>
                     <p className="mt-4 max-w-[35ch] text-[0.84rem] leading-[1.65] text-muted">
@@ -32,7 +32,7 @@ export default function Footer() {
                     <div>
                         <h2 className="mb-2 text-sm font-semibold text-white">Projects</h2>
                         {products.map((product) => (
-                            <PrefetchLink className={footerLinkClass} key={product.route} to={product.route} prefetch="intent">
+                            <PrefetchLink className={footerLinkClass} key={product.route} href={product.route} prefetch="intent">
                                 {product.name}
                             </PrefetchLink>
                         ))}
@@ -55,7 +55,7 @@ export default function Footer() {
             <div
                 className={cn(
                     siteContainerClass,
-                    "grid grid-cols-1 items-center gap-y-[0.6rem] py-[1.35rem] text-[0.68rem] leading-normal text-quiet md:grid-cols-[auto_1fr_auto] md:gap-x-8",
+                    "grid grid-cols-1 items-center gap-y-[0.6rem] py-4 text-xs leading-normal text-quiet md:grid-cols-[auto_1fr_auto] md:gap-x-8",
                 )}
             >
                 <span>© {new Date().getFullYear()} Hanami</span>
@@ -63,16 +63,16 @@ export default function Footer() {
                     An independent community project. Not affiliated with or endorsed by osu! or ppy Pty Ltd.
                 </span>
                 <div className="flex flex-wrap gap-x-4 gap-y-2 [&_a]:text-muted [&_a]:underline-offset-[0.2em]">
-                    <PrefetchLink to={routes.legal} prefetch="intent">
+                    <PrefetchLink href={routes.legal} prefetch="intent">
                         Legal center
                     </PrefetchLink>
-                    <PrefetchLink to={routes.legalPrivacy} prefetch="intent">
+                    <PrefetchLink href={routes.legalPrivacy} prefetch="intent">
                         Privacy
                     </PrefetchLink>
-                    <PrefetchLink to={routes.legalTerms} prefetch="intent">
+                    <PrefetchLink href={routes.legalTerms} prefetch="intent">
                         Terms
                     </PrefetchLink>
-                    <PrefetchLink to={routes.legalCookies} prefetch="intent">
+                    <PrefetchLink href={routes.legalCookies} prefetch="intent">
                         Cookies
                     </PrefetchLink>
                 </div>

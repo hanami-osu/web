@@ -6,17 +6,17 @@ import { siteContainerClass, sitePageClass } from "@/components/layout/styles";
 import { Eyebrow } from "@/components/marketing";
 import { cn } from "@/lib/utils";
 
-export const accountPageClass = cn(sitePageClass, "bg-[linear-gradient(150deg,rgba(235,118,170,0.055),transparent_34%),var(--color-bg)]");
+export const accountPageClass = sitePageClass;
 
-export const profileLayoutClass = "py-[clamp(2.75rem,5vw,4.5rem)]";
+export const profileLayoutClass = "py-[clamp(2.5rem,5vw,4rem)]";
 
 export const profileHeadingClass =
-    "mb-10 max-w-220 [&>h1]:text-[clamp(2.15rem,4vw,3.35rem)] [&>h1]:leading-[1.04] [&>h1]:tracking-[-0.05em] [&>p:not(:first-child)]:mt-4 [&>p:not(:first-child)]:max-w-[62ch] [&>p:not(:first-child)]:text-[0.95rem] [&>p:not(:first-child)]:leading-[1.6] [&>p:not(:first-child)]:text-muted";
+    "mb-8 max-w-220 [&>h1]:font-display [&>h1]:text-2xl [&>h1]:font-semibold [&>h1]:tracking-tight sm:[&>h1]:text-3xl [&>p:not(:first-child)]:mt-3 [&>p:not(:first-child)]:max-w-[62ch] [&>p:not(:first-child)]:text-[0.92rem] [&>p:not(:first-child)]:leading-[1.6] [&>p:not(:first-child)]:text-muted";
 
-export const accountPanelClass = "overflow-hidden rounded-md border border-border bg-surface/55";
+export const accountPanelClass = "overflow-hidden rounded-md border border-border bg-surface [&_h3]:font-display [&_h3]:font-semibold";
 
 export const accountPanelHeaderClass =
-    "grid gap-2 border-b border-border px-[clamp(1.35rem,3vw,2rem)] py-5 [&_h2]:text-[1.25rem] [&_h2]:tracking-[-0.025em] [&_p]:text-[0.8rem] [&_p]:leading-[1.55] [&_p]:text-muted";
+    "grid gap-1.5 border-b border-border px-[clamp(1.25rem,2.6vw,1.75rem)] py-4 [&_h2]:font-display [&_h2]:text-[1.125rem] [&_h2]:font-semibold [&_h2]:tracking-[-0.02em] [&_p]:text-[0.78rem] [&_p]:leading-[1.55] [&_p]:text-muted";
 
 export function AccountPage({ children }: { children: ReactNode }) {
     return (
@@ -39,7 +39,7 @@ export function AccountPageIntro({
     children,
     className,
 }: {
-    eyebrow: string;
+    eyebrow?: string;
     title: string;
     description: string;
     children?: ReactNode;
@@ -47,7 +47,7 @@ export function AccountPageIntro({
 }) {
     return (
         <header className={cn(profileHeadingClass, className)}>
-            <Eyebrow>{eyebrow}</Eyebrow>
+            {eyebrow && <Eyebrow>{eyebrow}</Eyebrow>}
             <h1>{title}</h1>
             <p>{description}</p>
             {children}
@@ -75,7 +75,7 @@ export function AccountPanelHeader({ title, description, id }: { title: string; 
 export function AuthLayout({ children }: { children: ReactNode }) {
     return (
         <AccountPage>
-            <main className={cn(siteContainerClass, "grid min-h-155 place-items-center py-20")}>{children}</main>
+            <main className={cn(siteContainerClass, "grid min-h-155 place-items-center py-[clamp(3rem,7vw,5rem)]")}>{children}</main>
         </AccountPage>
     );
 }
@@ -90,7 +90,7 @@ export function AuthPanel({
         <section
             {...props}
             className={cn(
-                "w-[min(100%,600px)] rounded-md border border-border bg-surface/60 p-[clamp(1.75rem,5vw,3rem)] [&>h1]:text-[clamp(2.3rem,6vw,4rem)] [&>h1]:leading-[1.02] [&>h1]:tracking-[-0.055em] [&>p:not(:first-child)]:mt-[1.2rem] [&>p:not(:first-child)]:leading-[1.7] [&>p:not(:first-child)]:text-muted",
+                "w-[min(100%,600px)] rounded-md border border-border bg-surface p-[clamp(1.5rem,4vw,2.25rem)] [&_h1]:font-display [&_h1]:font-semibold [&>h1]:text-2xl [&>h1]:tracking-tight sm:[&>h1]:text-3xl [&>p:not(:first-child)]:mt-4 [&>p:not(:first-child)]:leading-[1.65] [&>p:not(:first-child)]:text-muted",
                 width === "compact" && "w-[min(100%,480px)] p-6 sm:p-8",
                 className,
             )}

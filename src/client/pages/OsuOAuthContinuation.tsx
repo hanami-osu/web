@@ -1,43 +1,46 @@
+"use client";
+
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 
 import { continueOAuthPostLogin, signOutFromHanami, useSession } from "@/client/lib/auth";
 import { getSignedOAuthQuery, isOsuOAuthContinuationRequest, readOAuthError } from "@/client/lib/auth-navigation";
 import { routes } from "@/client/routes/paths";
+import { useRawSearch } from "@/client/lib/use-raw-search";
 import { fetchJson } from "@/client/lib/fetch-json";
 import { AuthLayout, AuthPanel } from "@/components/account/account-shell";
 import { Eyebrow } from "@/components/marketing";
 import { primaryActionClass, textButtonClass } from "@/components/ui/action-styles";
-import { revealUpFast } from "@/lib/motion";
 
 type ContinuationState = "ready" | "connecting" | "conflict" | "continuing" | "error";
 
 export default function OsuOAuthContinuation() {
     const { data: session, isPending } = useSession();
-    const location = useLocation();
-    const navigate = useNavigate();
-    const oauthQuery = useMemo(() => getSignedOAuthQuery(location.search), [location.search]);
-    const linked = useMemo(() => new URLSearchParams(location.search).get("linked") === "1", [location.search]);
-    const oauthErrorCode = useMemo(() => new URLSearchParams(location.search).get("error"), [location.search]);
+    const rawSearch = useRawSearch();
+    const search = rawSearch ?? "";
+    const router = useRouter();
+    const oauthQuery = useMemo(() => getSignedOAuthQuery(search), [search]);
+    const linked = useMemo(() => new URLSearchParams(search).get("linked") === "1", [search]);
+    const oauthErrorCode = useMemo(() => new URLSearchParams(search).get("error"), [search]);
     const continued = useRef(false);
     const [state, setState] = useState<ContinuationState>("ready");
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        if (isPending) return;
-        if (!oauthQuery || !isOsuOAuthContinuationRequest(location.search)) {
+        if (rawSearch === null || isPending) return;
+        if (!oauthQuery || !isOsuOAuthContinuationRequest(search)) {
             setState("error");
             setError("This authorization request expired or could not be verified. Start again.");
             return;
         }
         if (!session) {
-            navigate(`${routes.login}${location.search}`, { replace: true });
+            router.replace(`${routes.login}${search}`);
             return;
         }
         if (oauthErrorCode) {
             const ownershipConflict = oauthErrorCode.toLowerCase() === "account_already_linked_to_different_user";
             setState(ownershipConflict ? "conflict" : "error");
-            setError(readOAuthError(location.search, "osu"));
+            setError(readOAuthError(search, "osu"));
             return;
         }
         if (!linked || continued.current) return;
@@ -50,7 +53,7 @@ export default function OsuOAuthContinuation() {
                 setState("error");
                 setError("Hanami could not finish the authorization request. Start again.");
             });
-    }, [isPending, linked, location.search, navigate, oauthErrorCode, oauthQuery, session]);
+    }, [isPending, linked, oauthErrorCode, oauthQuery, rawSearch, router, search, session]);
 
     async function connectOsu() {
         if (!oauthQuery) return;
@@ -91,7 +94,7 @@ export default function OsuOAuthContinuation() {
     return (
         <AuthLayout>
             <OsuOAuthContinuationPanel
-                state={isPending ? "continuing" : state}
+                state={isPending || rawSearch === null ? "continuing" : state}
                 error={error}
                 onConnect={connectOsu}
                 onRestart={restartOsuSignIn}
@@ -114,7 +117,7 @@ export function OsuOAuthContinuationPanel({
     const isBusy = state === "connecting" || state === "continuing";
 
     return (
-        <AuthPanel className={revealUpFast}>
+        <AuthPanel>
             <Eyebrow>osu! authorization</Eyebrow>
             {state === "ready" || state === "connecting" ? (
                 <>

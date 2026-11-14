@@ -31,7 +31,7 @@ export function LegalDocument({
         <main className={cn(siteContainerClass, "py-[clamp(2.5rem,5vw,4rem)] print:w-full print:py-0")}>
             <header className="max-w-225 border-b border-border-strong pb-[clamp(1.75rem,3vw,2.75rem)] print:max-w-none">
                 <PrefetchLink
-                    to={routes.legal}
+                    href={routes.legal}
                     prefetch="intent"
                     className="mb-6 inline-flex items-center gap-2 text-[0.78rem] text-muted no-underline transition-colors hover:text-white print:hidden"
                 >
@@ -122,12 +122,12 @@ function LegalRelatedActions({ currentTitle }: { currentTitle: string }) {
                     <p className="mt-1 text-[0.82rem] text-muted">Keep the policy and account actions together.</p>
                 </div>
                 <div className="flex flex-wrap gap-x-5 gap-y-2">
-                    <PrefetchLink className="inline-flex items-center gap-2 text-[0.8rem] text-white" to={routes.legal} prefetch="intent">
+                    <PrefetchLink className="inline-flex items-center gap-2 text-[0.8rem] text-white" href={routes.legal} prefetch="intent">
                         All legal documents <ArrowUpRight className="size-3.5" aria-hidden="true" />
                     </PrefetchLink>
                     <PrefetchLink
                         className="inline-flex items-center gap-2 text-[0.8rem] text-white"
-                        to={routes.profilePrivacy}
+                        href={routes.profilePrivacy}
                         prefetch="intent"
                     >
                         Account controls <ArrowUpRight className="size-3.5" aria-hidden="true" />
@@ -139,7 +139,7 @@ function LegalRelatedActions({ currentTitle }: { currentTitle: string }) {
                     <PrefetchLink
                         className="rounded-md border border-border bg-surface/35 p-4 no-underline transition-colors hover:border-border-strong hover:bg-surface"
                         key={document.path}
-                        to={document.path}
+                        href={document.path}
                         prefetch="intent"
                     >
                         <span className="text-[0.82rem] font-medium text-white">{document.title}</span>

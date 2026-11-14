@@ -1,23 +1,19 @@
-import { Link } from "react-router-dom";
-
 import { routes } from "@/client/routes/paths";
 import { AuthLayout, AuthPanel } from "@/components/account/account-shell";
-import { Eyebrow } from "@/components/marketing";
+import { PrefetchLink } from "@/components/navigation/prefetch-link";
 import { primaryActionClass } from "@/components/ui/action-styles";
-import { revealUpFast } from "@/lib/motion";
 
 export default function LinkErrorPage() {
     return (
         <AuthLayout>
-            <AuthPanel className={revealUpFast}>
-                <Eyebrow>Link expired</Eyebrow>
-                <h1>Get a new link from Hanami Bot.</h1>
+            <AuthPanel>
+                <h1>Link expired</h1>
                 <p>
                     This one-time link expired or was already used. Return to Discord and run <code>/link</code> again.
                 </p>
-                <Link className={`${primaryActionClass} mt-8 w-fit`} to={routes.home}>
+                <PrefetchLink className={`${primaryActionClass} mt-6 w-fit`} href={routes.home}>
                     Return to Hanami
-                </Link>
+                </PrefetchLink>
             </AuthPanel>
         </AuthLayout>
     );

@@ -1,6 +1,6 @@
 import { Github } from "lucide-react";
 
-import { ActionLink, Eyebrow, SectionIntro, TextLink } from "@/components/marketing";
+import { ActionLink, SectionIntro, TextLink } from "@/components/marketing";
 import {
     HeroActions,
     ProductFootnote,
@@ -9,12 +9,11 @@ import {
     ProductSplit,
     productBodyClass,
     productHeroCopyClass,
-    productSubtitleClass,
     productTitleClass,
     sectionBodyClass,
     sectionHeadingClass,
 } from "@/components/product/product-layout";
-import { siteContainerClass } from "@/components/layout/styles";
+import { heroMinHeightClass, siteContainerClass } from "@/components/layout/styles";
 import { getProduct } from "@/data/site-config";
 import { cn } from "@/lib/utils";
 
@@ -44,7 +43,7 @@ export default function OsuGuessr() {
 
     return (
         <ProductPage>
-            <section className="relative min-h-130 overflow-hidden border-b border-border max-md:min-h-110">
+            <section className="relative overflow-hidden border-b border-border">
                 <img
                     className="absolute inset-0 size-full object-cover object-[55%_46%]"
                     src="/products/osuguessr-hero.webp"
@@ -57,11 +56,9 @@ export default function OsuGuessr() {
                     className="absolute inset-0 bg-[linear-gradient(90deg,rgba(10,9,12,0.97)_0%,rgba(10,9,12,0.82)_41%,rgba(10,9,12,0.18)_75%),linear-gradient(0deg,rgba(10,9,12,0.72),transparent_42%)] max-md:bg-bg/80"
                     aria-hidden="true"
                 />
-                <div className={cn(siteContainerClass, "relative z-20 flex min-h-130 items-center py-12 max-md:min-h-110")}>
+                <div className={cn(siteContainerClass, heroMinHeightClass, "relative z-20 flex items-center py-8 md:py-10")}>
                     <div className={cn(productHeroCopyClass, "max-w-175")}>
-                        <Eyebrow>Browser game</Eyebrow>
                         <h1 className={productTitleClass}>{product.name}</h1>
-                        <p className={productSubtitleClass}>Guess osu! beatmaps from images and audio.</p>
                         <p className={productBodyClass}>
                             Sign in with osu!, choose a mode, and guess from artwork, audio, or a skin screenshot. Compare your scores and
                             streaks on the leaderboards.
@@ -82,25 +79,23 @@ export default function OsuGuessr() {
             </section>
 
             <ProductSection>
-                <SectionIntro
-                    eyebrow="Three ways to play"
-                    title="Backgrounds, audio, and skins"
-                    body="Choose which kind of clue you want to play with."
-                />
+                <SectionIntro title="Game modes" />
                 <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
                     {modes.map(({ title, description, image, alt }) => (
-                        <article className="overflow-hidden rounded-md border border-border bg-surface" key={title}>
-                            <img
-                                className="aspect-video w-full object-cover"
-                                src={image}
-                                alt={alt}
-                                width="1920"
-                                height="1080"
-                                loading="lazy"
-                            />
-                            <div className="p-5">
-                                <h3 className="text-xl font-semibold tracking-[-0.02em]">{title}</h3>
-                                <p className="mt-[0.35rem] text-[0.85rem] leading-[1.55] text-muted">{description}</p>
+                        <article key={title}>
+                            <div className="relative aspect-video overflow-hidden rounded-lg border border-border bg-surface">
+                                <img
+                                    className="size-full object-cover opacity-85"
+                                    src={image}
+                                    alt={alt}
+                                    width="1920"
+                                    height="1080"
+                                    loading="lazy"
+                                />
+                            </div>
+                            <div className="pt-3">
+                                <h3 className="mb-1 text-base font-semibold tracking-tight">{title}</h3>
+                                <p className="text-sm leading-relaxed text-muted">{description}</p>
                             </div>
                         </article>
                     ))}
@@ -109,21 +104,20 @@ export default function OsuGuessr() {
 
             <ProductSplit>
                 <div>
-                    <Eyebrow>Game variants</Eyebrow>
-                    <h2 className={sectionHeadingClass}>Classic and Death mode</h2>
+                    <h2 className={sectionHeadingClass}>Classic and Survival</h2>
                     <p className={sectionBodyClass}>
-                        Classic mode ends after ten rounds. Death mode continues while the guesses are correct. Completed games appear in
-                        your history and count toward achievements and rankings.
+                        Classic ends after 15 rounds. Survival continues until all 3 lives are lost. Ranked runs appear in your history and
+                        earn pp for the leaderboards.
                     </p>
                 </div>
-                <dl className="grid gap-7 [&_dd]:text-[0.88rem] [&_dd]:leading-[1.55] [&_dd]:text-muted [&_dt]:text-[0.78rem] [&_dt]:font-medium [&_dt]:text-violet-soft [&>div]:grid [&>div]:grid-cols-[5.5rem_1fr] [&>div]:gap-4 min-xs:[&>div]:grid-cols-[7rem_1fr]">
+                <dl className="grid gap-7 [&_dd]:text-[0.88rem] [&_dd]:leading-[1.55] [&_dd]:text-muted [&_dt]:text-[0.78rem] [&_dt]:font-medium [&_dt]:text-accent-soft [&>div]:grid [&>div]:grid-cols-[5.5rem_1fr] [&>div]:gap-4 min-xs:[&>div]:grid-cols-[7rem_1fr]">
                     <div>
                         <dt>Classic</dt>
-                        <dd>10 rounds with a cumulative score</dd>
+                        <dd>15 rounds with a cumulative score</dd>
                     </div>
                     <div>
-                        <dt>Death</dt>
-                        <dd>A streak that ends on an incorrect answer</dd>
+                        <dt>Survival</dt>
+                        <dd>3 lives; a wrong guess, skip, or timeout costs one</dd>
                     </div>
                     <div>
                         <dt>Account</dt>

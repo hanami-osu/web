@@ -1,11 +1,14 @@
+"use client";
+
 import { useEffect, useState, type FormEvent } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { usePathname, useRouter } from "next/navigation";
 
 import { reauthenticateWithDiscord } from "@/client/lib/auth";
 import { readOAuthError } from "@/client/lib/auth-navigation";
 import { clearPendingDeletionChallenge, prepareDeletionReauthentication, readPendingDeletionChallenge } from "@/client/lib/deletion-reauth";
 import { fetchJson } from "@/client/lib/fetch-json";
 import { routes } from "@/client/routes/paths";
+import { useRawSearch } from "@/client/lib/use-raw-search";
 import { AccountLayout, AccountPage, AccountPageIntro, AccountPanel, AccountPanelHeader } from "@/components/account/account-shell";
 import { useAuthenticatedSession } from "@/components/account/authenticated-route";
 import { ConfirmationPage, ErrorMessage } from "@/components/account/privacy-views";
@@ -27,12 +30,12 @@ interface StartResponse {
 
 export default function AccountPrivacy() {
     const session = useAuthenticatedSession();
-    const location = useLocation();
-    const navigate = useNavigate();
-    const isConfirmation = location.pathname.endsWith("/confirm");
-    const [challenge, setChallenge] = useState<string | null>(
-        () => readChallengeFromHash(location.hash) ?? (isConfirmation ? readPendingDeletionChallenge() : null),
-    );
+    const pathname = usePathname();
+    const rawSearch = useRawSearch();
+    const search = rawSearch ?? "";
+    const router = useRouter();
+    const isConfirmation = pathname.endsWith("/confirm");
+    const [challenge, setChallenge] = useState<string | null>(null);
     const [osuLink, setOsuLink] = useState<OsuLinkStatus | null>(null);
     const [osuLinkUnavailable, setOsuLinkUnavailable] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -42,13 +45,15 @@ export default function AccountPrivacy() {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        const hashChallenge = readChallengeFromHash(location.hash);
-        if (hashChallenge) setChallenge(hashChallenge);
-        if (isConfirmation && (hashChallenge || challenge)) clearPendingDeletionChallenge();
-        if (location.hash) window.history.replaceState(null, "", location.pathname);
-    }, [challenge, isConfirmation, location.hash, location.pathname]);
+        const hashChallenge = readChallengeFromHash(window.location.hash);
+        const pendingChallenge = isConfirmation ? readPendingDeletionChallenge() : null;
+        if (hashChallenge || pendingChallenge) setChallenge(hashChallenge ?? pendingChallenge);
+        if (isConfirmation && (hashChallenge || pendingChallenge)) clearPendingDeletionChallenge();
+        if (window.location.hash) window.history.replaceState(null, "", window.location.pathname);
+    }, [isConfirmation, pathname]);
 
     useEffect(() => {
+        if (rawSearch === null) return;
         if (isConfirmation) {
             setLoading(false);
             return;
@@ -64,16 +69,17 @@ export default function AccountPrivacy() {
             .catch(() => setOsuLinkUnavailable(true))
             .finally(() => setLoading(false));
         return () => controller.abort();
-    }, [isConfirmation, session.user.id]);
+    }, [isConfirmation, rawSearch, session.user.id]);
 
     useEffect(() => {
-        const oauthError = readOAuthError(location.search);
-        if (!oauthError || !new URLSearchParams(location.search).has("reauth")) return;
+        if (rawSearch === null) return;
+        const oauthError = readOAuthError(search);
+        if (!oauthError || !new URLSearchParams(search).has("reauth")) return;
 
         clearPendingDeletionChallenge();
         setError(oauthError);
-        navigate(routes.profilePrivacy, { replace: true });
-    }, [location.search, navigate]);
+        router.replace(routes.profilePrivacy);
+    }, [rawSearch, router, search]);
 
     useEffect(() => {
         if (!isConfirmation || !challenge || confirmationReady) return;
@@ -110,7 +116,7 @@ export default function AccountPrivacy() {
                 }
                 return;
             }
-            navigate(result.confirmationPath);
+            router.push(result.confirmationPath);
         } catch (requestError) {
             setError(requestError instanceof Error ? requestError.message : "Account deletion could not be started.");
             setAction(null);
@@ -162,7 +168,7 @@ export default function AccountPrivacy() {
                         className="mt-6 flex flex-wrap gap-x-6 gap-y-[0.65rem] text-[0.82rem] [&_a]:text-muted [&_a]:underline [&_a]:decoration-white/40 [&_a]:underline-offset-[0.25em]"
                         aria-label="Account sections"
                     >
-                        <PrefetchLink to={routes.profile}>Account and preferences</PrefetchLink>
+                        <PrefetchLink href={routes.profile}>Account and preferences</PrefetchLink>
                         <span className="text-white" aria-current="page">
                             Privacy and deletion
                         </span>
@@ -239,7 +245,7 @@ export default function AccountPrivacy() {
                     <p className="p-[clamp(1.35rem,3vw,2rem)] text-[0.84rem] leading-[1.7] text-muted [&_a]:text-white [&_a]:underline [&_a]:decoration-white/45 [&_a]:underline-offset-[0.22em]">
                         Email <a href={`mailto:${legalContacts.privacy}`}>{legalContacts.privacy}</a> for help with data outside immediate
                         account deletion. Never send passwords, tokens, cookies, API keys, or backup codes. Read the{" "}
-                        <PrefetchLink to={routes.legalDataDeletion}>data deletion details</PrefetchLink> for what is deleted from each
+                        <PrefetchLink href={routes.legalDataDeletion}>data deletion details</PrefetchLink> for what is deleted from each
                         service.
                     </p>
                 </AccountPanel>

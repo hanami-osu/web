@@ -10,6 +10,7 @@ import { createHanamiOAuthProviderPlugin } from "./provider";
 const origin = "https://hanami.yorunoken.com";
 const redirectUri = "https://osu-guessr.example.com/auth/hanami/callback";
 const clientEnvironment = {
+    NODE_ENV: "test",
     OSU_GUESSR_CLIENT_ID: "guessr-client",
     OSU_GUESSR_REDIRECT_URIS: redirectUri,
 } as NodeJS.ProcessEnv;

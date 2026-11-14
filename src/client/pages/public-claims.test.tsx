@@ -1,8 +1,12 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it, mock } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
-import { MemoryRouter } from "react-router-dom";
 
-import Companion from "./Companion";
+mock.module("next/navigation", () => ({
+    usePathname: () => "/companion",
+    useRouter: () => ({ push() {}, replace() {}, prefetch() {} }),
+}));
+
+const { default: Companion } = await import("./Companion");
 
 describe("published product claims", () => {
     it("describes Companion as an unfinished local-only prototype", () => {
@@ -18,9 +22,5 @@ describe("published product claims", () => {
 });
 
 function render(Component: () => React.JSX.Element): string {
-    return renderToStaticMarkup(
-        <MemoryRouter>
-            <Component />
-        </MemoryRouter>,
-    );
+    return renderToStaticMarkup(<Component />);
 }

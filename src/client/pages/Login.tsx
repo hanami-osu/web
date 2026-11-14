@@ -1,6 +1,8 @@
+"use client";
+
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 
 import { claimPendingAttempt, signInWithDiscord, signInWithOsu, type IdentityProvider, useSession } from "@/client/lib/auth";
 import {
@@ -11,42 +13,42 @@ import {
     readReturnTo,
 } from "@/client/lib/auth-navigation";
 import { routes } from "@/client/routes/paths";
+import { useRawSearch } from "@/client/lib/use-raw-search";
 import { AuthLayout, AuthPanel } from "@/components/account/account-shell";
 import { DiscordLogo, OsuLogo } from "@/components/icons/provider-icons";
-import { Eyebrow } from "@/components/marketing";
 import { PrefetchLink } from "@/components/navigation/prefetch-link";
 import { primaryActionClass, textButtonClass } from "@/components/ui/action-styles";
-import { revealUpFast, spin } from "@/lib/motion";
+import { spin } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
-export default function Login() {
+export default function Login({ osuGuessrClientId = "" }: { osuGuessrClientId?: string }) {
     const { data: session, isPending: isSessionPending } = useSession();
-    const location = useLocation();
-    const navigate = useNavigate();
-    const returnTo = useMemo(() => readReturnTo(location.search), [location.search]);
-    const osuAuthorization = useMemo(() => isOsuOAuthContinuationRequest(location.search), [location.search]);
+    const rawSearch = useRawSearch();
+    const search = rawSearch ?? "";
+    const isSearchReady = rawSearch !== null;
+    const router = useRouter();
+    const returnTo = useMemo(() => readReturnTo(search), [search]);
+    const osuAuthorization = useMemo(() => isOsuOAuthContinuationRequest(search), [search]);
     const osuGuessrAuthorization = useMemo(
-        () => isOsuGuessrOAuthContinuationRequest(location.search, import.meta.env.OSU_GUESSR_CLIENT_ID ?? ""),
-        [location.search],
+        () => isOsuGuessrOAuthContinuationRequest(search, osuGuessrClientId),
+        [osuGuessrClientId, search],
     );
-    const oauthError = useMemo(
-        () => readOAuthError(location.search, osuAuthorization ? "osu" : "discord"),
-        [location.search, osuAuthorization],
-    );
-    const accountDeleted = useMemo(() => new URLSearchParams(location.search).get("deleted") === "1", [location.search]);
+    const oauthError = useMemo(() => readOAuthError(search, osuAuthorization ? "osu" : "discord"), [search, osuAuthorization]);
+    const accountDeleted = useMemo(() => new URLSearchParams(search).get("deleted") === "1", [search]);
     const initiationPending = useRef(false);
     const [redirectingProvider, setRedirectingProvider] = useState<IdentityProvider | null>(null);
     const [localError, setLocalError] = useState<string | null>(null);
 
     useEffect(() => {
+        if (!isSearchReady) return;
         const destination = getAuthenticatedLoginDestination(isSessionPending, Boolean(session), returnTo);
-        if (destination) navigate(destination, { replace: true });
-    }, [isSessionPending, navigate, returnTo, session]);
+        if (destination) router.replace(destination);
+    }, [isSearchReady, isSessionPending, returnTo, router, session]);
 
     useEffect(() => {
-        if (!osuAuthorization || isSessionPending || session || initiationPending.current) return;
+        if (!isSearchReady || !osuAuthorization || isSessionPending || session || initiationPending.current) return;
         void handleSignIn("osu");
-    }, [isSessionPending, osuAuthorization, session]);
+    }, [isSearchReady, isSessionPending, osuAuthorization, session]);
 
     async function handleSignIn(provider: IdentityProvider) {
         if (!claimPendingAttempt(initiationPending)) return;
@@ -65,7 +67,9 @@ export default function Login() {
 
     if (session) return null;
 
-    if (isSessionPending) {
+    const error = localError || oauthError;
+
+    if (!isSearchReady || isSessionPending || (osuAuthorization && !error)) {
         return (
             <AuthLayout>
                 <LoginPending />
@@ -77,7 +81,7 @@ export default function Login() {
         <AuthLayout>
             <AuthPanel width="compact">
                 <LoginPanel
-                    error={localError || oauthError}
+                    error={error}
                     status={accountDeleted ? "Your Hanami account was deleted." : null}
                     mode={osuAuthorization ? (osuGuessrAuthorization ? "osu-guessr" : "osu") : "general"}
                     redirectingProvider={redirectingProvider}
@@ -104,15 +108,14 @@ export function LoginPanel({
     const osuMode = mode !== "general";
 
     return (
-        <section className={cn("w-full", revealUpFast)} aria-labelledby="sign-in-title">
-            <Eyebrow>Hanami account</Eyebrow>
-            <h1 className="text-[clamp(1.875rem,5vw,2.25rem)] leading-[1.1] tracking-[-0.04em] text-white" id="sign-in-title">
-                Sign in to Hanami
+        <section className="w-full" aria-labelledby="sign-in-title">
+            <h1 className="text-2xl tracking-tight sm:text-3xl" id="sign-in-title">
+                {mode === "osu-guessr" ? "Sign in to osu!guessr" : "Sign in to Hanami"}
             </h1>
-            <p className="mt-6 max-w-[54ch] text-[clamp(1rem,1.5vw,1.12rem)] leading-[1.7] text-muted">
+            <p className="mt-3 max-w-[54ch] text-sm leading-relaxed text-muted">
                 {osuMode
                     ? mode === "osu-guessr"
-                        ? "Hanami handles sign-in for osu!guessr. New users get a Hanami account automatically, then return to osu!guessr."
+                        ? "osu!guessr signs you in with osu! through Hanami. You’ll return to osu!guessr afterwards."
                         : "Use osu! to return to the requesting app."
                     : "Sign in with Discord or osu!. If you’ve linked both accounts, you can use either one."}
             </p>
@@ -131,10 +134,10 @@ export function LoginPanel({
                 </div>
             )}
 
-            <div className="mt-8 grid gap-3">
+            <div className="mt-6 grid gap-3">
                 {!osuMode && (
                     <button
-                        className={cn(primaryActionClass, "h-12 w-full")}
+                        className={cn(primaryActionClass, "w-full")}
                         type="button"
                         onClick={() => onSignIn("discord")}
                         disabled={redirectingProvider !== null}
@@ -148,7 +151,7 @@ export function LoginPanel({
                     </button>
                 )}
                 <button
-                    className={cn(primaryActionClass, "h-12 w-full")}
+                    className={cn(primaryActionClass, "w-full")}
                     type="button"
                     onClick={() => onSignIn("osu")}
                     disabled={redirectingProvider !== null}
@@ -158,9 +161,9 @@ export function LoginPanel({
                 </button>
             </div>
 
-            <div className="mt-8 flex flex-wrap items-center gap-x-7 gap-y-4">
-                <PrefetchLink className={textButtonClass} to={routes.home} prefetch="none">
-                    <ArrowLeft aria-hidden="true" /> Back to the public site
+            <div className="mt-6 flex flex-wrap items-center gap-x-7 gap-y-4">
+                <PrefetchLink className={textButtonClass} href={routes.home} prefetch="none">
+                    <ArrowLeft aria-hidden="true" /> Back to Hanami
                 </PrefetchLink>
             </div>
         </section>
