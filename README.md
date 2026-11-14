@@ -15,14 +15,15 @@ Hanami Web serves the public project site, owns canonical Hanami accounts, and a
 
 ## Stack
 
-- Bun and Elysia for the server
-- React 19, React Router, and Vite for the client
+- Next.js App Router and React for the website
+- Bun for the runtime and package manager
+- Elysia for the existing API handlers
 - Prisma 7 with MariaDB
 - Better Auth for sessions, provider accounts, and the OAuth provider
 
 ## Requirements
 
-- Bun 1.3 or newer
+- Bun 1.4.4 or newer
 - MariaDB or MySQL
 - A Discord OAuth application
 - An osu! OAuth application
@@ -44,19 +45,21 @@ Hanami Web serves the public project site, owns canonical Hanami accounts, and a
 
 3. Create separate databases for Hanami Web and the existing Hanami Bot schema. Set `WEB_DATABASE_URL` and `BOT_DATABASE_URL`. The application refuses to start when both URLs point to the same database.
 
-4. Apply the web migrations:
+4. Generate the Prisma clients, apply the web migrations, and register the osu!guessr OIDC client if you configured it:
 
     ```bash
+    bun run db:generate
     bun run db:migrate
+    bun run db:reconcile-oauth-client
     ```
 
-5. Start the Vite client and Elysia server together:
+5. Start the Next.js application:
 
     ```bash
     bun run dev
     ```
 
-    The client runs on `http://localhost:5173` and proxies `/api` to the server on `http://localhost:3000`.
+    The website and API run together at `http://localhost:3000`.
 
 ## Configuration
 
@@ -74,7 +77,7 @@ The full list is in `.env.example`. The important values are:
 | `OSU_GUESSR_CLIENT_ID` / `OSU_GUESSR_REDIRECT_URIS` | Public osu!guessr OIDC client                       |
 | `TEST_DATABASE_URL`                                 | Optional disposable database for integration tests  |
 
-Register the matching callback URLs with Discord and osu!. Production callbacks must use HTTPS.
+Register the matching callback URLs with Discord (`/api/auth/callback/discord`) and osu! (`/api/auth/callback/osu`). Production callbacks must use HTTPS.
 
 ## Validation
 
@@ -88,7 +91,7 @@ bun run test
 bun run build
 ```
 
-Tests that need `TEST_DATABASE_URL` are skipped when it is unset. Use a dedicated database whose name contains `test` or `disposable`; the test guard refuses to run against the configured web or bot database.
+Tests that need `TEST_DATABASE_URL` are skipped when it is unset. Use a dedicated database whose name has `test`, `testing`, or `disposable` as a separate `-` or `_` delimited part (for example `hanami_test`); the test guard rejects other names and refuses to run against the configured web or bot database.
 
 ## Deployment
 
@@ -103,6 +106,8 @@ Terminate TLS before the application and set `BETTER_AUTH_URL` to the public HTT
 Hanami Web is the canonical identity store. Hanami Bot keeps a small compatibility database containing its own user settings. The web application writes only the Discord-to-osu! mapping needed by the bot and never treats that database as a source of canonical identities.
 
 ## Security
+
+`OSU_GUESSR_CLIENT_ID` must match `HANAMI_CLIENT_ID` in the osu!guessr deployment. Reconciliation skips the client without an error when any redirect URI is invalid: only HTTPS, or HTTP on `localhost`, `127.0.0.1`, or `[::1]`, without a fragment.
 
 Never commit production credentials, tokens, private keys, or real environment files. Generate independent values for `BETTER_AUTH_SECRET` and `BOT_LINK_SECRET`, and keep the osu!guessr redirect allowlist limited to exact callback URLs.
 
