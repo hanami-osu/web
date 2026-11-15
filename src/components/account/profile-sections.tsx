@@ -216,14 +216,15 @@ export function BotPreferencesSection({ settings, loading, action, saved, onSett
                         </SelectField>
                         <SelectField
                             label="Score source"
-                            value={String(current.score_data)}
+                            value={current.score_data === null ? "auto" : String(current.score_data)}
                             onChange={(value) =>
                                 onSettingsChange({
                                     ...current,
-                                    score_data: parseBinary(value),
+                                    score_data: value === "auto" ? null : parseBinary(value),
                                 })
                             }
                         >
+                            <option value="auto">Automatic</option>
                             <option value="0">Stable</option>
                             <option value="1">Lazer</option>
                         </SelectField>

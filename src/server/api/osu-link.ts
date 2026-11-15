@@ -81,7 +81,7 @@ export const osuLinkRoute = new Elysia()
                 mode: parseMode(settings.mode),
                 score_embeds: parseBinary(settings.score_embeds, defaultSettings.score_embeds),
                 embed_type: parseEmbedType(settings.embed_type),
-                score_data: parseBinary(settings.score_data, defaultSettings.score_data),
+                score_data: parseScoreData(settings.score_data),
             } satisfies BotSettings;
         } catch (error) {
             logRouteFailure("read bot preferences", error);
@@ -184,7 +184,7 @@ function parseSettings(value: unknown): BotSettings | null {
     if (!isOneOf(value.mode, ["osu", "mania", "taiko", "fruits"] as const)) return null;
     if (!isOneOf(value.embed_type, ["hanami", "bathbot", "owobot"] as const)) return null;
     if (value.score_embeds !== 0 && value.score_embeds !== 1) return null;
-    if (value.score_data !== 0 && value.score_data !== 1) return null;
+    if (value.score_data !== 0 && value.score_data !== 1 && value.score_data !== null) return null;
 
     return {
         mode: value.mode,
@@ -204,6 +204,10 @@ function parseEmbedType(value: string | null): BotSettings["embed_type"] {
 
 export function parseBinary(value: number | null, fallback: 0 | 1): 0 | 1 {
     return value === 0 || value === 1 ? value : fallback;
+}
+
+export function parseScoreData(value: number | null): BotSettings["score_data"] {
+    return value === 0 || value === 1 ? value : null;
 }
 
 function isOneOf<const T extends readonly string[]>(value: unknown, choices: T): value is T[number] {

@@ -111,7 +111,7 @@ export default function Home() {
                                 Browse repositories
                             </TextLink>
                         </div>
-                        <div className="p-5">
+                        <div className="p-5" id="support">
                             <h2 className={sectionHeadingClass}>Support Hanami</h2>
                             <p className="mt-2 max-w-[52ch] text-sm leading-relaxed text-muted">
                                 GitHub Sponsors contributions cover hosting and maintenance.

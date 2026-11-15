@@ -73,15 +73,26 @@ export async function signOutFromHanami(execute: SignOutOperation = signOut): Pr
 }
 
 export async function continueOAuthPostLogin(options: { fetch?: OAuthContinuationFetch } = {}): Promise<string> {
+    return postSignedOAuthQuery("/api/auth/oauth2/continue", { postLogin: true }, options.fetch);
+}
+
+export async function submitOAuthConsent(accept: boolean, options: { fetch?: OAuthContinuationFetch } = {}): Promise<string> {
+    return postSignedOAuthQuery("/api/auth/oauth2/consent", { accept }, options.fetch);
+}
+
+async function postSignedOAuthQuery(
+    path: string,
+    body: Record<string, unknown>,
+    fetchImplementation: OAuthContinuationFetch = globalThis.fetch,
+): Promise<string> {
     const search = typeof window === "undefined" ? "" : window.location.search;
     const oauthQuery = getSignedOAuthQuery(search);
     if (!oauthQuery) throw new Error("This authorization request could not be verified.");
 
-    const execute = options.fetch ?? globalThis.fetch;
-    const response = await execute("/api/auth/oauth2/continue", {
+    const response = await fetchImplementation(path, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ postLogin: true, oauth_query: oauthQuery }),
+        body: JSON.stringify({ ...body, oauth_query: oauthQuery }),
     });
     const data = (await response.json().catch(() => null)) as { url?: unknown; redirect_uri?: unknown } | null;
     const redirectURI = typeof data?.url === "string" ? data.url : data?.redirect_uri;

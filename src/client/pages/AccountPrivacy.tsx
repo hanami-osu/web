@@ -191,7 +191,7 @@ export default function AccountPrivacy() {
                                 <small>Your Hanami profile, linked accounts, and sign-in sessions</small>
                             </div>
                             <div>
-                                <dt>Connected osu! data</dt>
+                                <dt>osu! account used by Hanami Bot</dt>
                                 <dd>
                                     {loading
                                         ? "Checking…"
@@ -201,7 +201,9 @@ export default function AccountPrivacy() {
                                             ? osuLink.username || `osu! ID ${osuLink.banchoId}`
                                             : "Not connected"}
                                 </dd>
-                                <small>{osuLink?.linked ? `osu! ID ${osuLink.banchoId}` : "No linked osu! identity was found"}</small>
+                                <small>
+                                    {osuLink?.linked ? `osu! ID ${osuLink.banchoId}` : "Hanami Bot is not using an osu! account for you"}
+                                </small>
                             </div>
                         </dl>
                     </AccountPanel>
