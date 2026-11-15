@@ -52,7 +52,7 @@ export const products: readonly ProductSummary[] = [
         name: "osu!guessr",
         route: routes.osuguessr,
         category: "Browser game",
-        description: "Identify beatmaps from their backgrounds, audio clips, or skin screenshots.",
+        description: "Identify beatmaps from their backgrounds, audio clips, or skin screenshots, or pick the play worth more pp.",
         tone: "violet",
         links: {
             primary: "https://osuguessr.com",
@@ -64,7 +64,7 @@ export const products: readonly ProductSummary[] = [
         name: "Hanami Companion",
         route: routes.companion,
         category: "Desktop app",
-        description: "An osu! desktop app for tracking plays through tosu. Still in development.",
+        description: "An osu! desktop app that will bring your osu! activity into Hanami. Being rebuilt from scratch.",
         tone: "cyan",
         links: {
             primary: "https://github.com/hanami-osu/companion",
@@ -105,13 +105,14 @@ export const routeMetadata = {
     },
     "/osuguessr": {
         title: "osu!guessr | Hanami",
-        description: "Identify osu! beatmaps from backgrounds, audio clips, and skin screenshots in Classic or Survival.",
+        description:
+            "Identify osu! beatmaps from backgrounds, audio clips, and skin screenshots, or compare plays by pp, in Classic, Survival, or Death.",
         indexable: true,
         socialImage: "/products/osuguessr-hero.webp",
     },
     "/companion": {
         title: "Hanami Companion | osu! desktop app",
-        description: "Track osu! plays with Hanami Companion. The app is still in development.",
+        description: "Hanami Companion, an osu! desktop app for Hanami, is being rebuilt from scratch. No release is available yet.",
         indexable: true,
         socialImage: "/products/companion-icon.png",
     },

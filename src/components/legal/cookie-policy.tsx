@@ -160,14 +160,6 @@ export default function CookiePolicy() {
                     <tbody>
                         <tr>
                             <td>
-                                <code>app-config</code>
-                            </td>
-                            <td>osu!guessr local storage</td>
-                            <td>Game, UI, API, audio, and performance preferences.</td>
-                            <td>Until cleared or overwritten.</td>
-                        </tr>
-                        <tr>
-                            <td>
                                 <code>locale</code>
                             </td>
                             <td>osu!guessr local storage</td>
@@ -176,10 +168,26 @@ export default function CookiePolicy() {
                         </tr>
                         <tr>
                             <td>
-                                <code>theme</code>
+                                <code>osu-guessr:audio-volume</code>
                             </td>
                             <td>osu!guessr local storage</td>
-                            <td>Theme preference supplied by next-themes.</td>
+                            <td>Audio Guessr volume preference.</td>
+                            <td>Until cleared or overwritten.</td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <code>osu-guessr:audio-autoplay</code>
+                            </td>
+                            <td>osu!guessr local storage</td>
+                            <td>Whether Audio Guessr clips play automatically.</td>
+                            <td>Until cleared or overwritten.</td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <code>osu-guessr:keyboard-shortcuts-open</code>
+                            </td>
+                            <td>osu!guessr local storage</td>
+                            <td>Whether the in-game keyboard shortcuts panel is expanded.</td>
                             <td>Until cleared or overwritten.</td>
                         </tr>
                         <tr>

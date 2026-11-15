@@ -24,7 +24,7 @@ const commands = [
     ["/top", "Top scores", "Best plays for a linked user or an osu! username."],
     ["/beatmap", "Beatmap details", "Difficulty, BPM, length, object counts, estimates, and map links."],
     ["/compare", "Score comparison", "Compare a player on a beatmap already shared in the conversation."],
-    ["/whatif", "Performance scenarios", "Explore performance-point requirements for different score outcomes."],
+    ["/whatif", "Performance scenarios", "See the pp and rank you would reach with hypothetical plays."],
 ] as const;
 
 export default function Bot() {
