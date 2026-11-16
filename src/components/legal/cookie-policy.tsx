@@ -68,9 +68,10 @@ export default function CookiePolicy() {
                     cookie. Better Auth may use its server-side verification records during Discord or osu! sign-in.
                 </p>
                 <p>
-                    Account deletion may require a new Discord OAuth round trip. It uses Better Auth’s existing necessary OAuth/session
-                    mechanisms plus a short-lived server-side challenge whose random browser value is removed from the address after the
-                    confirmation page reads it. The workflow does not add an analytics, advertising, or consent cookie.
+                    Scheduling data deletion may require a new Discord or osu! OAuth round trip, using a provider already linked to the
+                    account. It uses Better Auth’s existing necessary OAuth/session mechanisms plus a short-lived server-side challenge
+                    whose random browser value is removed from the address after the confirmation page reads it. The workflow does not add
+                    an analytics, advertising, or consent cookie.
                 </p>
             </LegalSection>
 

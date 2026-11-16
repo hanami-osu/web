@@ -4,8 +4,8 @@ export const legalContacts = {
 } as const;
 
 export const legalMetadata = {
-    lastUpdated: "July 18, 2026",
-    effectiveDate: "July 18, 2026",
+    lastUpdated: "November 16, 2026",
+    effectiveDate: "November 16, 2026",
 } as const;
 
 export const legalServices = [
@@ -34,6 +34,6 @@ export const legalDocuments = [
     {
         title: "Data deletion",
         path: "/legal/data-deletion",
-        description: "What sign-out, unlinking, account deletion, and privacy requests each do.",
+        description: "What sign-out, unlinking, scheduled data deletion, and privacy requests each do.",
     },
 ] as const;

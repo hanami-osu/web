@@ -27,7 +27,7 @@ const taskCards = [
     },
     {
         title: "Delete data or make a privacy request",
-        description: "Delete your account or contact us about other personal data.",
+        description: "Choose which data to delete, or contact us about other personal data.",
         path: routes.legalDataDeletion,
         icon: Trash2,
     },
@@ -40,7 +40,7 @@ export default function LegalIndex() {
                 <Eyebrow>Legal center</Eyebrow>
                 <h1 className="max-w-190 text-[clamp(2.7rem,6vw,5.1rem)] leading-[1.02] tracking-[-0.04em]">Privacy and terms</h1>
                 <p className="mt-6 max-w-[66ch] text-base leading-[1.7] text-muted">
-                    Read how Hanami Web, Hanami Bot, and osu!guessr use your data, the rules for using them, and how to delete your account.
+                    Read how Hanami Web, Hanami Bot, and osu!guessr use your data, the rules for using them, and how to delete your data.
                     Hanami Companion is being rebuilt and has no release yet, so these pages don't cover it.
                 </p>
             </header>
@@ -135,7 +135,7 @@ export default function LegalIndex() {
                             </dd>
                         </div>
                         <div>
-                            <dt className="text-[0.72rem] text-quiet">Signed-in account deletion</dt>
+                            <dt className="text-[0.72rem] text-quiet">Delete your data</dt>
                             <dd className="mt-2 text-[0.82rem] text-white">
                                 <PrefetchLink
                                     className="underline decoration-white/45 underline-offset-[0.25em]"

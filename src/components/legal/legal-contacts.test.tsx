@@ -54,7 +54,7 @@ describe("legal contacts and request links", () => {
     });
 
     it("publishes effective documents without unresolved owner markers", () => {
-        expect(legalMetadata.effectiveDate).toBe("July 18, 2026");
+        expect(legalMetadata.effectiveDate).toBe("November 16, 2026");
 
         for (const Component of [LegalIndex, PrivacyPolicy, TermsOfService, CookiePolicy, DataDeletion]) {
             const html = render(Component);
@@ -114,6 +114,27 @@ describe("legal contacts and request links", () => {
         expect(deletion).toContain("Disconnect a sign-in method");
         expect(privacy).not.toContain("Disconnecting osu! only clears");
         expect(privacy).not.toContain("stored against the Discord ID in the bot database");
+    });
+
+    it("describes scheduled, selective deletion that includes osu!guessr", () => {
+        const deletion = render(DataDeletion);
+        const privacy = render(PrivacyPolicy);
+
+        expect(deletion).toContain('id="immediate"');
+        expect(deletion).toContain("DELETE MY DATA");
+        expect(deletion).toContain("Delete osu!guessr data");
+        expect(deletion).toContain("14 days");
+        expect(privacy).toContain("14-day waiting period");
+        expect(privacy).toContain("Score pp");
+
+        for (const Component of [LegalIndex, PrivacyPolicy, TermsOfService, CookiePolicy, DataDeletion]) {
+            const html = render(Component);
+            expect(html).not.toContain("DELETE MY HANAMI ACCOUNT");
+            expect(html).not.toContain("separate osu!guessr profile");
+            expect(html).not.toContain("Separate osu!guessr profiles");
+            expect(html).not.toContain("deletion runs immediately");
+            expect(html).not.toContain("—");
+        }
     });
 });
 

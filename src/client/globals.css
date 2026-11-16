@@ -52,10 +52,14 @@ h2 {
 }
 
 html {
-    scroll-behavior: smooth;
     scroll-padding-top: 6rem;
     scrollbar-gutter: stable;
     background: var(--color-bg);
+}
+
+/* Smooth only for in-page link clicks, so loading a URL with a #fragment jumps instantly. */
+html:focus-within {
+    scroll-behavior: smooth;
 }
 
 body {
@@ -116,10 +120,6 @@ a {
 }
 
 @media (prefers-reduced-motion: reduce) {
-    html {
-        scroll-behavior: auto;
-    }
-
     *,
     *::before,
     *::after {

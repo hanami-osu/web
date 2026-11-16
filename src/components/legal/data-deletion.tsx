@@ -5,7 +5,7 @@ import { LegalDocument, LegalSection, LegalTable, type TocItem } from "./legal-d
 
 const toc: readonly TocItem[] = [
     { id: "differences", label: "Account controls" },
-    { id: "immediate", label: "Immediate deletion" },
+    { id: "immediate", label: "Delete your data" },
     { id: "other", label: "Other privacy requests" },
     { id: "limits", label: "Scope and limits" },
 ];
@@ -14,13 +14,13 @@ export default function DataDeletion() {
     return (
         <LegalDocument
             title="Account and data deletion"
-            summary="How to delete your Hanami account, what is deleted with it, and how to request deletion of other data."
+            summary="How to choose which Hanami data to delete, what happens during the 14-day waiting period, and how to request deletion of other data."
             toc={toc}
             atAGlance={[
-                "Signing out ends a session; disconnecting removes one sign-in method; neither deletes the Hanami account.",
-                "Deleting your account removes your Hanami profile, linked sign-in methods, and the Bot data listed below.",
-                "Provider accounts, separate osu!guessr profiles, and some operational records remain separate.",
-                "Email privacy@yorunoken.com if you need help deleting other data.",
+                "Signing out ends a session; disconnecting removes one sign-in method; neither deletes data.",
+                "You can delete your osu!guessr data, your Hanami Bot data, your Hanami account, or any combination.",
+                "Selected data is hidden at once and permanently deleted after 14 days unless you cancel.",
+                "Discord and osu! provider accounts are never deleted. Email privacy@yorunoken.com for help with other data.",
             ]}
         >
             <LegalSection id="differences" title="1. Account controls">
@@ -44,45 +44,104 @@ export default function DataDeletion() {
                             <td>The final sign-in method cannot be removed. Provider accounts are never deleted.</td>
                         </tr>
                         <tr>
+                            <td>Delete osu!guessr data</td>
+                            <td>
+                                Hides your osu!guessr profile, leaderboard entries, search results, score pages, and API keys, signs out
+                                osu!guessr sessions, and permanently deletes your osu!guessr data after 14 days.
+                            </td>
+                            <td>Requires a linked osu! account. Challenges you created are kept without your name.</td>
+                        </tr>
+                        <tr>
+                            <td>Delete Hanami Bot data</td>
+                            <td>
+                                Stops the Bot from using your linked osu! ID and permanently deletes your Bot user record and preferences
+                                after 14 days.
+                            </td>
+                            <td>Requires a linked Discord account. Cached osu! scores and maps keyed to osu! IDs are not removed.</td>
+                        </tr>
+                        <tr>
                             <td>Delete Hanami account</td>
                             <td>
-                                Immediately removes the Hanami account, its connected identities, and Discord-keyed Bot data described
-                                below.
+                                Includes Hanami Bot data. Revokes all Hanami sessions and the tokens and consents Hanami issued at once,
+                                then permanently deletes the Hanami account after 14 days.
                             </td>
-                            <td>Does not delete provider accounts, a separate osu!guessr profile, or operational logs.</td>
+                            <td>Does not delete Discord or osu! provider accounts or operational logs.</td>
                         </tr>
                     </tbody>
                 </LegalTable>
             </LegalSection>
 
-            <LegalSection id="immediate" title="2. Delete your account">
+            <LegalSection id="immediate" title="2. Delete your data">
                 <ol>
                     <li>
                         Open <PrefetchLink href={routes.profilePrivacy}>account privacy</PrefetchLink> and review the signed-in account.
                     </li>
-                    <li>Choose delete account. Hanami requires a Discord sign-in from approximately the last 15 minutes.</li>
                     <li>
-                        Type <code>DELETE MY HANAMI ACCOUNT</code> on the final confirmation screen.
+                        Choose what to delete: osu!guessr data, Hanami Bot data, Hanami account, or any combination. Selecting the Hanami
+                        account also selects Hanami Bot data. An option is unavailable when the account it depends on is not linked.
                     </li>
-                    <li>After confirmation, deletion runs immediately and signs the account out.</li>
+                    <li>
+                        Sign in again with a linked provider of your choice, Discord or osu!. Hanami requires a sign-in from approximately
+                        the last 15 minutes.
+                    </li>
+                    <li>
+                        Type <code>DELETE MY DATA</code> on the final confirmation screen. The screen shows the selected data and the date
+                        on which it will be permanently deleted.
+                    </li>
                 </ol>
-                <p>The immediate action deletes:</p>
+
+                <h3>The 14-day waiting period</h3>
+                <p>
+                    Deletion is scheduled for 14 days after you confirm. The wait protects against deletion by someone who has taken over
+                    your account. Hanami does not send an email or Discord message about the schedule. From the moment you confirm,
+                    everything you selected is hidden:
+                </p>
                 <ul>
-                    <li>the Hanami Web user, all connected provider records and osu! profile data, and all website sessions;</li>
-                    <li>the Hanami Bot user row keyed to that Discord account, including its linked osu! ID and saved preferences; and</li>
-                    <li>short-lived deletion reauthentication records and any legacy deletion-request record tied to the website user.</li>
+                    <li>
+                        Hanami account: all Hanami website sessions are signed out, and the OAuth tokens and consents Hanami issued to
+                        connected apps are revoked.
+                    </li>
+                    <li>
+                        osu!guessr data: your profile, leaderboard entries, search results, score pages, and API keys are hidden or stop
+                        working, you are removed from any multiplayer lobby, and existing osu!guessr sessions are signed out.
+                    </li>
+                    <li>Hanami Bot data: the Bot stops using your linked osu! ID.</li>
                 </ul>
                 <p>
-                    If Hanami cannot reach the linked Bot database, the website account is kept and the action reports a temporary failure
-                    instead of claiming that deletion completed.
+                    To cancel, sign in to Hanami during the 14 days. Account privacy shows a banner with the scheduled deletion date and a
+                    Cancel button. Signing in to osu!guessr during the waiting period stops at a Hanami page that offers the same Cancel
+                    button. Cancelling restores everything that was hidden. Sessions and tokens that were revoked are not restored, so you
+                    sign in again as usual.
+                </p>
+
+                <h3>What is permanently deleted</h3>
+                <p>After 14 days, a background job permanently deletes the selected data:</p>
+                <ul>
+                    <li>
+                        osu!guessr data: your osu!guessr user record, completed games and their rounds, performance points (pp) and
+                        achievements, badges, API keys, problem reports, and your per-answer content-statistics contributions.
+                    </li>
+                    <li>
+                        Hanami Bot data: the Bot user record keyed to your Discord account, including its linked osu! ID and preferences.
+                    </li>
+                    <li>
+                        Hanami account: the Hanami Web user, all connected provider records, osu! profile data, sessions, the tokens and
+                        consent records Hanami issued to connected apps, and deletion reauthentication records.
+                    </li>
+                </ul>
+                <p>
+                    osu!guessr challenges you created are kept for other players, but the link to you as their creator is removed. Anonymous
+                    aggregate content statistics, such as how often an item is answered correctly, are kept because they do not identify
+                    you. If a service is temporarily unreachable when the job runs, the job retries later rather than reporting the deletion
+                    as complete.
                 </p>
             </LegalSection>
 
             <LegalSection id="other" title="3. Other privacy requests">
                 <p>
-                    Email <a href={`mailto:${legalContacts.privacy}`}>{legalContacts.privacy}</a> if you cannot sign in, lost Discord
-                    access, used osu!guessr separately, believe Hanami holds data outside the immediate deletion scope, or want access,
-                    correction, restriction, portability, or objection rather than deletion.
+                    Email <a href={`mailto:${legalContacts.privacy}`}>{legalContacts.privacy}</a> if you cannot sign in, lost access to both
+                    Discord and osu!, believe Hanami holds data outside the scopes above, or want access, correction, restriction,
+                    portability, or objection rather than deletion.
                 </p>
                 <p>
                     Include the relevant Discord or osu! ID and which Hanami service you used. Do not send passwords, OAuth tokens, cookies,
@@ -98,14 +157,16 @@ export default function DataDeletion() {
 
             <LegalSection id="limits" title="4. Scope and limits">
                 <p>
-                    Hanami cannot delete Discord or osu! provider accounts or provider-side records. The immediate website action also does
-                    not authenticate against or delete a separate osu!guessr profile. Those records must be handled through the relevant
-                    service or privacy contact.
+                    Hanami cannot delete Discord or osu! provider accounts or provider-side records. Those must be handled through the
+                    relevant provider. Cached osu! score and beatmap records in the Bot database are keyed to osu! IDs rather than to your
+                    account and are refreshed or overwritten as the Bot operates. osu!guessr’s Score pp mode stores snapshots of public osu!
+                    player and score data fetched from the osu! API that are not tied to an osu!guessr account; email the privacy contact to
+                    ask for a snapshot to be removed.
                 </p>
                 <p>
                     Operational logs, private error-channel messages, abuse-prevention records, and analytics limitations may require
                     separate review or temporary retention for justified security or legal reasons. The repositories do not document a
-                    production backup-retention schedule. Future Discord sign-in may create a new Hanami website account after deletion.
+                    production backup-retention schedule. Signing in with Discord or osu! after deletion may create a new Hanami account.
                 </p>
             </LegalSection>
         </LegalDocument>

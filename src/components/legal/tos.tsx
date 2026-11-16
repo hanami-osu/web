@@ -45,8 +45,8 @@ export default function TermsOfService() {
                 </p>
                 <p>
                     Hanami provides osu!-related lookups, Discord commands, a beatmap guessing game, account-linking and preference tools,
-                    public rankings, issue-reporting features, immediate deletion for the website and Discord-keyed Bot account data, and a
-                    privacy-contact path for other records.
+                    public rankings, issue-reporting features, scheduled deletion of osu!guessr data, Hanami Bot data, and the Hanami
+                    account, and a privacy-contact path for other records.
                 </p>
             </LegalSection>
 
@@ -110,10 +110,11 @@ export default function TermsOfService() {
                     never be released. The operator may modify or retire products and integrations, with reasonable notice where practical.
                 </p>
                 <p>
-                    Signed-in account deletion immediately removes the Hanami Web account, all connected provider records, and Discord-keyed
-                    Hanami Bot account data described in the privacy notice. Separate osu!guessr profiles, provider-side records, and
-                    operational logs may require separate action or temporary retention as described in the privacy and deletion notices.
-                    The repositories do not document a production backup-retention schedule.
+                    Signed-in users can choose to delete their osu!guessr data, Hanami Bot data, Hanami account, or any combination.
+                    Selected data is hidden at once and permanently deleted after a 14-day waiting period, during which the user can sign in
+                    and cancel. The data each choice covers is described in the privacy and deletion notices. Provider-side records and
+                    operational logs may require separate action or temporary retention as described in those notices. The repositories do
+                    not document a production backup-retention schedule.
                 </p>
             </LegalSection>
 
