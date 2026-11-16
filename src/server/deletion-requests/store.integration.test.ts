@@ -32,6 +32,9 @@ describeDatabase("Prisma immediate account deletion store", () => {
     beforeEach(async () => {
         if (!prisma) throw new Error("TEST_DATABASE_URL is required");
         deletedBotAccounts.length = 0;
+        await prisma.oauthConsent.deleteMany({ where: { userId: "user-1" } });
+        await prisma.oauthAccessToken.deleteMany({ where: { userId: "user-1" } });
+        await prisma.oauthRefreshToken.deleteMany({ where: { userId: "user-1" } });
         await prisma.user.deleteMany({ where: { id: "user-1" } });
         await seedUser("user-1", "discord-1", "session-1");
     });
@@ -53,6 +56,19 @@ describeDatabase("Prisma immediate account deletion store", () => {
         expect(await prisma.account.count({ where: { userId: "user-1" } })).toBe(0);
         expect(await prisma.session.count({ where: { userId: "user-1" } })).toBe(0);
         expect(await prisma.accountDeletionReauthChallenge.count({ where: { userId: "user-1" } })).toBe(0);
+    });
+
+    it("deletes OAuth tokens and consents Hanami issued to the user", async () => {
+        if (!store || !prisma) throw new Error("Database test store is unavailable");
+        await seedOAuthGrant("user-1");
+        const tokenHash = await hashChallengeToken(createChallengeToken());
+        await store.startReauthentication({ userId: "user-1", tokenHash, now, alreadyFresh: true });
+        await store.deleteAccount({ userId: "user-1", tokenHash, now: new Date(now.getTime() + 1_000) });
+
+        expect(await prisma.user.findUnique({ where: { id: "user-1" } })).toBeNull();
+        expect(await prisma.oauthRefreshToken.count({ where: { token: "refresh-user-1" } })).toBe(0);
+        expect(await prisma.oauthAccessToken.count({ where: { token: "access-user-1" } })).toBe(0);
+        expect(await prisma.oauthConsent.count({ where: { clientId: "deletion-test-client" } })).toBe(0);
     });
 
     it("keeps the web account when linked-service deletion fails", async () => {
@@ -78,6 +94,35 @@ async function deployTestMigrations(databaseUrl: string): Promise<void> {
     });
     const [code, error] = await Promise.all([child.exited, new Response(child.stderr).text()]);
     if (code !== 0) throw new Error(error);
+}
+
+async function seedOAuthGrant(userId: string): Promise<void> {
+    if (!prisma) throw new Error("TEST_DATABASE_URL is required");
+    await prisma.oauthClient.upsert({
+        where: { clientId: "deletion-test-client" },
+        update: {},
+        create: { clientId: "deletion-test-client", redirectUris: ["http://localhost/callback"] },
+    });
+    const refresh = await prisma.oauthRefreshToken.create({
+        data: {
+            token: `refresh-${userId}`,
+            clientId: "deletion-test-client",
+            userId,
+            scopes: ["openid", "offline_access"],
+            expiresAt: new Date(now.getTime() + 86_400_000),
+        },
+    });
+    await prisma.oauthAccessToken.create({
+        data: {
+            token: `access-${userId}`,
+            clientId: "deletion-test-client",
+            userId,
+            refreshId: refresh.id,
+            scopes: ["openid"],
+            expiresAt: new Date(now.getTime() + 3_600_000),
+        },
+    });
+    await prisma.oauthConsent.create({ data: { clientId: "deletion-test-client", userId, scopes: ["openid"] } });
 }
 
 async function seedUser(userId: string, discordId: string, sessionId: string): Promise<void> {

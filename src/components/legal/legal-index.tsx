@@ -41,7 +41,7 @@ export default function LegalIndex() {
                 <h1 className="max-w-190 text-[clamp(2.7rem,6vw,5.1rem)] leading-[1.02] tracking-[-0.04em]">Privacy and terms</h1>
                 <p className="mt-6 max-w-[66ch] text-base leading-[1.7] text-muted">
                     Read how Hanami Web, Hanami Bot, and osu!guessr use your data, the rules for using them, and how to delete your account.
-                    These pages also cover Companion.
+                    Hanami Companion is being rebuilt and has no release yet, so these pages don't cover it.
                 </p>
             </header>
 

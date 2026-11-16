@@ -1,6 +1,13 @@
 import { describe, expect, it, mock } from "bun:test";
 
-import { claimPendingAttempt, continueOAuthPostLogin, signInWithDiscord, signInWithOsu, signOutFromHanami } from "./auth";
+import {
+    claimPendingAttempt,
+    continueOAuthPostLogin,
+    signInWithDiscord,
+    signInWithOsu,
+    signOutFromHanami,
+    submitOAuthConsent,
+} from "./auth";
 
 describe("shared authentication actions", () => {
     it("starts Discord OAuth with validated success and error destinations", async () => {
@@ -118,5 +125,33 @@ describe("shared authentication actions", () => {
         } finally {
             Object.defineProperty(globalThis, "window", { configurable: true, value: previousWindow });
         }
+    });
+
+    it("sends the consent decision with the signed OAuth query", async () => {
+        const signedQuery =
+            "?scope=openid+osu&client_id=guessr-client&ba_iat=1730000000000&exp=1730000600&ba_param=ba_iat&ba_param=ba_param&ba_param=client_id&ba_param=exp&ba_param=scope&sig=signature";
+        const previousWindow = globalThis.window;
+        const requests: Request[] = [];
+        Object.defineProperty(globalThis, "window", {
+            configurable: true,
+            value: { location: { search: signedQuery } },
+        });
+
+        try {
+            await submitOAuthConsent(false, {
+                fetch: async (input, init) => {
+                    requests.push(new Request(new URL(String(input), "http://localhost"), init));
+                    return new Response(JSON.stringify({ redirect_uri: "https://osu-guessr.example.com/callback?error=access_denied" }), {
+                        headers: { "Content-Type": "application/json" },
+                    });
+                },
+            });
+        } finally {
+            Object.defineProperty(globalThis, "window", { configurable: true, value: previousWindow });
+        }
+
+        expect(requests).toHaveLength(1);
+        expect(requests[0]?.url).toContain("/api/auth/oauth2/consent");
+        expect(await requests[0]?.json()).toMatchObject({ accept: false, oauth_query: expect.stringContaining("client_id=guessr-client") });
     });
 });

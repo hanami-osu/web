@@ -4,6 +4,7 @@ import { buildOsuClaims, osuClaimNames, type OsuClaimsDatabase } from "./claims"
 
 const coreClaimNames = ["sub", "iss", "aud", "exp", "iat", "sid", "scope", "azp"] as const;
 export const osuOAuthContinuationPath = "/oauth/continue/osu";
+export const oauthConsentPath = "/oauth/consent";
 
 export function createHanamiOAuthProviderPlugin(database: OsuClaimsDatabase) {
     const customClaims = async ({ user, scopes }: { user?: { id: string } | null; scopes: readonly string[] }) => {
@@ -17,7 +18,7 @@ export function createHanamiOAuthProviderPlugin(database: OsuClaimsDatabase) {
         scopes: ["openid", "osu", "offline_access"],
         grantTypes: ["authorization_code", "refresh_token"],
         loginPage: "/login",
-        consentPage: "/oauth/consent",
+        consentPage: oauthConsentPath,
         postLogin: {
             page: osuOAuthContinuationPath,
             consentReferenceId: async () => undefined,

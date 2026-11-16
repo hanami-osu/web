@@ -12,7 +12,7 @@ export const legalServices = [
     { name: "Hanami Web", status: "Hosted account and public site" },
     { name: "Hanami Bot", status: "Hosted Discord bot" },
     { name: "osu!guessr", status: "Separately hosted game" },
-    { name: "Hanami Companion", status: "Unfinished local prototype" },
+    { name: "Hanami Companion", status: "Being rebuilt; not released" },
 ] as const;
 
 export const legalDocuments = [

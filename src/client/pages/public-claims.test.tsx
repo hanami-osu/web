@@ -9,11 +9,12 @@ mock.module("next/navigation", () => ({
 const { default: Companion } = await import("./Companion");
 
 describe("published product claims", () => {
-    it("describes Companion as an unfinished local-only prototype", () => {
+    it("describes Companion as unreleased without claiming unshipped features", () => {
         const html = render(Companion);
 
-        expect(html).toContain("unfinished local prototype");
-        expect(html).toContain("local play detection");
+        expect(html).toContain("being rebuilt from scratch");
+        expect(html).toContain("nothing to install or try yet");
+        expect(html).not.toContain("tosu");
         expect(html).not.toContain("authentication");
         expect(html).not.toContain("Authorization Code");
         expect(html).not.toContain("PKCE");

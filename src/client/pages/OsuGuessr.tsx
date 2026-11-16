@@ -36,6 +36,12 @@ const modes = [
         image: "/products/osuguessr-skin.webp",
         alt: "Blue-toned osu! skin screenshot used in osu!guessr",
     },
+    {
+        title: "Score pp",
+        description: "Compare two real osu! plays and pick the one worth more pp.",
+        image: "/products/osuguessr-hero.webp",
+        alt: "Beatmap artwork used for osu!guessr's Score pp mode",
+    },
 ] as const;
 
 export default function OsuGuessr() {
@@ -60,8 +66,9 @@ export default function OsuGuessr() {
                     <div className={cn(productHeroCopyClass, "max-w-175")}>
                         <h1 className={productTitleClass}>{product.name}</h1>
                         <p className={productBodyClass}>
-                            Sign in with osu!, choose a mode, and guess from artwork, audio, or a skin screenshot. Compare your scores and
-                            streaks on the leaderboards.
+                            Sign in with osu!, choose a mode, and guess from artwork, audio, or a skin screenshot, or pick which of two
+                            plays is worth more pp. Play solo or in multiplayer lobbies, and compare your scores and streaks on the
+                            leaderboards.
                         </p>
                         <HeroActions>
                             <ActionLink href={product.links.primary} external>
@@ -80,7 +87,7 @@ export default function OsuGuessr() {
 
             <ProductSection>
                 <SectionIntro title="Game modes" />
-                <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+                <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-4">
                     {modes.map(({ title, description, image, alt }) => (
                         <article key={title}>
                             <div className="relative aspect-video overflow-hidden rounded-lg border border-border bg-surface">
@@ -104,10 +111,10 @@ export default function OsuGuessr() {
 
             <ProductSplit>
                 <div>
-                    <h2 className={sectionHeadingClass}>Classic and Survival</h2>
+                    <h2 className={sectionHeadingClass}>Classic, Survival, and Death</h2>
                     <p className={sectionBodyClass}>
-                        Classic ends after 15 rounds. Survival continues until all 3 lives are lost. Ranked runs appear in your history and
-                        earn pp for the leaderboards.
+                        Classic ends after 15 rounds. Survival continues until all 3 lives are lost, and Death ends at the first mistake.
+                        Ranked runs appear in your history and earn pp for the leaderboards.
                     </p>
                 </div>
                 <dl className="grid gap-7 [&_dd]:text-[0.88rem] [&_dd]:leading-[1.55] [&_dd]:text-muted [&_dt]:text-[0.78rem] [&_dt]:font-medium [&_dt]:text-accent-soft [&>div]:grid [&>div]:grid-cols-[5.5rem_1fr] [&>div]:gap-4 min-xs:[&>div]:grid-cols-[7rem_1fr]">
@@ -118,6 +125,10 @@ export default function OsuGuessr() {
                     <div>
                         <dt>Survival</dt>
                         <dd>3 lives; a wrong guess, skip, or timeout costs one</dd>
+                    </div>
+                    <div>
+                        <dt>Death</dt>
+                        <dd>1 life; the first mistake ends the run</dd>
                     </div>
                     <div>
                         <dt>Account</dt>

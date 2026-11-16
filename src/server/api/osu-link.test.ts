@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
 
-import { parseBinary } from "./osu-link";
+import { parseBinary, parseScoreData } from "./osu-link";
 
 describe("stored Bot settings", () => {
     it("keeps each binary field's own default when the database value is null", () => {
@@ -8,5 +8,12 @@ describe("stored Bot settings", () => {
         expect(parseBinary(null, 0)).toBe(0);
         expect(parseBinary(0, 1)).toBe(0);
         expect(parseBinary(1, 0)).toBe(1);
+    });
+
+    it("keeps an unset score source unset so the Bot can choose per score", () => {
+        expect(parseScoreData(null)).toBeNull();
+        expect(parseScoreData(2)).toBeNull();
+        expect(parseScoreData(0)).toBe(0);
+        expect(parseScoreData(1)).toBe(1);
     });
 });

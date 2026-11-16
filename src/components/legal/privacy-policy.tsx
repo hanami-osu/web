@@ -67,6 +67,11 @@ export default function PrivacyPolicy() {
                     <li>Web session token, session dates, IP address, and user-agent string stored by Better Auth.</li>
                     <li>Short-lived OAuth verification values used to complete authentication safely.</li>
                     <li>
+                        When you sign in to osu!guessr through Hanami, Hanami Web acts as its OpenID Connect provider and stores the access
+                        tokens it issues, any refresh tokens, consent records, and the app's client registration. ID tokens are signed with
+                        keys Hanami Web stores.
+                    </li>
+                    <li>
                         Bot-issued account links store the Discord ID, supplied name and avatar snapshot, a SHA-256 ticket hash, and
                         creation, expiry, consumption, or invalidation dates. The URL token itself is not stored.
                     </li>
@@ -104,9 +109,10 @@ export default function PrivacyPolicy() {
                         stored in that record.
                     </li>
                     <li>
-                        Successful deletion removes the Hanami Web user, all connected provider records, osu! profile data, and sessions,
-                        then removes the Hanami Bot user row keyed to the connected Discord account. Separate osu!guessr profiles are not
-                        deleted by this action.
+                        Successful deletion removes the Hanami Web user, all connected provider records, osu! profile data, sessions, and
+                        the tokens and consent records Hanami issued to connected apps, and removes the Hanami Bot user row keyed to the
+                        connected Discord account. Separate osu!guessr profiles are not deleted by this action, and neither are cached osu!
+                        score and beatmap records in the Bot database, which are keyed to osu! IDs rather than to the account.
                     </li>
                 </ul>
 
@@ -128,8 +134,9 @@ export default function PrivacyPolicy() {
                         error details.
                     </li>
                     <li>
-                        On a prefix-command failure, message content and the user/guild/channel context may be sent to a configured private
-                        Discord error channel accessible to the operator and maintainers authorized to diagnose production errors.
+                        On a command failure, the user, guild, and channel context and the error details may be sent to a configured private
+                        Discord error channel accessible to the operator and maintainers authorized to diagnose production errors. For
+                        prefix commands this includes the message content.
                     </li>
                     <li>
                         Temporary Redis button state, including the initiating Discord user ID, with a one-hour code-defined lifetime;
@@ -149,6 +156,14 @@ export default function PrivacyPolicy() {
                         and play times. Profiles and leaderboards make some of this information public.
                     </li>
                     <li>
+                        Per-answer content statistics keyed to the osu! user ID (item, whether the answer was correct, and response time),
+                        shareable challenges that record the creating user, and badges and an optional profile banner URL shown on profiles.
+                    </li>
+                    <li>
+                        Multiplayer lobby state in Redis for up to about four hours, including each player's osu! user ID, username, avatar
+                        URL, points, and round results, plus short-lived realtime connection tokens and presence records.
+                    </li>
+                    <li>
                         Problem reports containing osu! user ID, mapset ID, report category, free-text description, status, and timestamps.
                         Report content may also be sent to a configured Discord webhook.
                     </li>
@@ -160,8 +175,8 @@ export default function PrivacyPolicy() {
                         and game progress; short Redis locks and rate-limit counters are also used.
                     </li>
                     <li>
-                        Browser preferences in local storage, locale in local storage and a cookie, game-session identifiers in session
-                        storage, and theme storage supplied by next-themes.
+                        Browser preferences (audio volume, audio autoplay, and shortcut-panel state) in local storage, locale in local
+                        storage and a cookie, and game-session identifiers in session storage.
                     </li>
                     <li>
                         Production pages load self-hosted Umami for aggregate analytics. Umami is configured to operate without analytics
@@ -256,8 +271,9 @@ export default function PrivacyPolicy() {
                         Discord error-channel, or other operational logs.
                     </li>
                     <li>
-                        Bot pagination state is configured for one hour. osu!guessr game state and item sets are configured for one hour;
-                        report rate limits for ten minutes; and API-key rate-limit counters for their code-defined window.
+                        Bot pagination state is configured for one hour. osu!guessr game state and item sets are configured for one hour,
+                        and multiplayer lobby state for about four hours; report rate limits for ten minutes; and API-key rate-limit
+                        counters for their code-defined window.
                     </li>
                     <li>
                         osu!guessr’s Auth.js session default is approximately 30 days. Its locale cookie is configured for about one year.

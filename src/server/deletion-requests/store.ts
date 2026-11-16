@@ -84,8 +84,14 @@ export class PrismaDeletionRequestStore implements AccountDeletionStore {
             const discordAccountId = account?.accountId;
             if (!discordAccountId) throw new AccountDeletionStoreError("account_not_found");
 
-            await this.deleteBotAccountData(discordAccountId);
+            // Refresh tokens block user deletion (ON DELETE RESTRICT); access tokens and consents would otherwise
+            // survive with their user link cleared.
+            await transaction.oauthAccessToken.deleteMany({ where: { userId: input.userId } });
+            await transaction.oauthRefreshToken.deleteMany({ where: { userId: input.userId } });
+            await transaction.oauthConsent.deleteMany({ where: { userId: input.userId } });
             await transaction.user.deleteMany({ where: { id: input.userId } });
+            // Last, so a failure here rolls back the web deletion instead of leaving a half-deleted account.
+            await this.deleteBotAccountData(discordAccountId);
         });
     }
 }

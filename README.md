@@ -103,7 +103,7 @@ Terminate TLS before the application and set `BETTER_AUTH_URL` to the public HTT
 
 ## Account data
 
-Hanami Web is the canonical identity store. Hanami Bot keeps a small compatibility database containing its own user settings. The web application writes only the Discord-to-osu! mapping needed by the bot and never treats that database as a source of canonical identities.
+Hanami Web is the canonical identity store. Hanami Bot keeps a small compatibility database containing its own user settings. The web application writes the Discord-to-osu! mapping needed by the bot and the bot preferences edited on the profile page, and deletes the user's row when a Hanami account is deleted. It never treats that database as a source of canonical identities.
 
 ## Security
 
