@@ -1,9 +1,11 @@
 import type { Prisma, PrismaClient } from "../../generated/prisma/web/client";
 
 import { safelyEqualHashes } from "../security/tokens";
-import { REAUTHENTICATION_WINDOW_MS } from "./domain";
+import { DELETION_GRACE_PERIOD_MS, REAUTHENTICATION_WINDOW_MS, type DeletionScopes } from "./domain";
+import type { OsuGuessrDeletionClient } from "./osu-guessr";
 
-export type AccountDeletionFailureCode = "account_not_found" | "challenge_invalid" | "challenge_stale" | "service_unavailable";
+export type AccountDeletionFailureCode =
+    "already_scheduled" | "challenge_invalid" | "challenge_stale" | "not_scheduled" | "scope_unavailable" | "service_unavailable";
 
 export class AccountDeletionStoreError extends Error {
     constructor(public readonly code: AccountDeletionFailureCode) {
@@ -12,18 +14,50 @@ export class AccountDeletionStoreError extends Error {
     }
 }
 
+export interface DeletionStatus {
+    scopes: DeletionScopes;
+    requestedAt: Date;
+    purgeAfter: Date;
+}
+
 export interface AccountDeletionStore {
     startReauthentication(input: { userId: string; tokenHash: string; now: Date; alreadyFresh: boolean }): Promise<void>;
     completeReauthentication(input: { userId: string; tokenHash: string; sessionCreatedAt: Date; now: Date }): Promise<Date>;
-    deleteAccount(input: { userId: string; tokenHash: string; now: Date }): Promise<void>;
+    scheduleDeletion(input: { userId: string; tokenHash: string; scopes: DeletionScopes; now: Date }): Promise<DeletionStatus>;
+    cancelDeletion(userId: string): Promise<void>;
+    getDeletionStatus(userId: string): Promise<DeletionStatus | null>;
 }
 
-type DeleteBotAccountData = (discordAccountId: string) => Promise<void>;
+export interface BotDeletionService {
+    /** Stops the Bot from using the linked osu! ID while keeping its preferences. */
+    pauseLink(discordId: string): Promise<void>;
+    /** Re-mirrors the Bot link from the user's current Hanami sign-in methods. */
+    restoreLink(userId: string): Promise<void>;
+    deleteUser(discordId: string): Promise<void>;
+}
+
+export interface LinkedDeletionServices {
+    bot: BotDeletionService;
+    osuGuessr: OsuGuessrDeletionClient;
+}
+
+export interface PurgeResult {
+    purged: number;
+    failed: number;
+}
+
+type ScheduleRow = {
+    deleteAccount: boolean;
+    deleteBot: boolean;
+    deleteOsuGuessr: boolean;
+    requestedAt: Date;
+    purgeAfter: Date;
+};
 
 export class PrismaDeletionRequestStore implements AccountDeletionStore {
     constructor(
         private readonly prisma: PrismaClient,
-        private readonly deleteBotAccountData: DeleteBotAccountData,
+        private readonly services: LinkedDeletionServices,
     ) {}
 
     async startReauthentication(input: { userId: string; tokenHash: string; now: Date; alreadyFresh: boolean }): Promise<void> {
@@ -69,30 +103,151 @@ export class PrismaDeletionRequestStore implements AccountDeletionStore {
         });
     }
 
-    async deleteAccount(input: { userId: string; tokenHash: string; now: Date }): Promise<void> {
-        await this.prisma.$transaction(async (transaction) => {
-            const challenge = await getChallenge(transaction, input.userId, input.tokenHash);
-            assertChallengeUsable(challenge, input.now);
-            if (!challenge.reauthenticatedAt || input.now.getTime() - challenge.reauthenticatedAt.getTime() >= REAUTHENTICATION_WINDOW_MS) {
-                throw new AccountDeletionStoreError("challenge_stale");
-            }
+    async scheduleDeletion(input: { userId: string; tokenHash: string; scopes: DeletionScopes; now: Date }): Promise<DeletionStatus> {
+        await assertReauthenticated(this.prisma, input.userId, input.tokenHash, input.now);
+        if (await this.prisma.accountDeletionSchedule.count({ where: { userId: input.userId } })) {
+            throw new AccountDeletionStoreError("already_scheduled");
+        }
 
-            const account = await transaction.account.findFirst({
-                where: { userId: input.userId, providerId: "discord" },
-                select: { accountId: true },
+        const { discordId, osuId } = await this.getProviderIds(input.userId);
+        const scopes = resolveScopes(input.scopes, { discordId, osuId });
+
+        await this.hideLinkedData(scopes, { discordId, osuId });
+
+        const purgeAfter = new Date(input.now.getTime() + DELETION_GRACE_PERIOD_MS);
+        try {
+            await this.prisma.$transaction(async (transaction) => {
+                const challenge = await getChallenge(transaction, input.userId, input.tokenHash);
+                assertChallengeUsable(challenge, input.now);
+                const consumed = await transaction.accountDeletionReauthChallenge.updateMany({
+                    where: { id: challenge.id, consumedAt: null },
+                    data: { consumedAt: input.now },
+                });
+                if (consumed.count !== 1) throw new AccountDeletionStoreError("challenge_invalid");
+
+                await transaction.accountDeletionSchedule.create({
+                    data: {
+                        id: crypto.randomUUID(),
+                        userId: input.userId,
+                        deleteAccount: scopes.account,
+                        deleteBot: scopes.bot,
+                        deleteOsuGuessr: scopes.osuGuessr,
+                        discordId,
+                        osuId,
+                        requestedAt: input.now,
+                        purgeAfter,
+                    },
+                });
+
+                if (scopes.account) {
+                    // Sign the account out everywhere, including apps signed in through Hanami, until it is restored.
+                    await transaction.oauthAccessToken.deleteMany({ where: { userId: input.userId } });
+                    await transaction.oauthRefreshToken.deleteMany({ where: { userId: input.userId } });
+                    await transaction.oauthConsent.deleteMany({ where: { userId: input.userId } });
+                    await transaction.session.deleteMany({ where: { userId: input.userId } });
+                }
             });
-            const discordAccountId = account?.accountId;
-            if (!discordAccountId) throw new AccountDeletionStoreError("account_not_found");
+        } catch (error) {
+            await this.restoreLinkedData(input.userId, scopes, osuId).catch(() => undefined);
+            throw error;
+        }
 
-            // Refresh tokens block user deletion (ON DELETE RESTRICT); access tokens and consents would otherwise
-            // survive with their user link cleared.
-            await transaction.oauthAccessToken.deleteMany({ where: { userId: input.userId } });
-            await transaction.oauthRefreshToken.deleteMany({ where: { userId: input.userId } });
-            await transaction.oauthConsent.deleteMany({ where: { userId: input.userId } });
-            await transaction.user.deleteMany({ where: { id: input.userId } });
-            // Last, so a failure here rolls back the web deletion instead of leaving a half-deleted account.
-            await this.deleteBotAccountData(discordAccountId);
+        return { scopes, requestedAt: input.now, purgeAfter };
+    }
+
+    async cancelDeletion(userId: string): Promise<void> {
+        const schedule = await this.prisma.accountDeletionSchedule.findUnique({ where: { userId } });
+        if (!schedule) throw new AccountDeletionStoreError("not_scheduled");
+
+        await this.restoreLinkedData(userId, toScopes(schedule), schedule.osuId).catch(() => {
+            throw new AccountDeletionStoreError("service_unavailable");
         });
+        await this.prisma.accountDeletionSchedule.deleteMany({ where: { userId } });
+    }
+
+    async getDeletionStatus(userId: string): Promise<DeletionStatus | null> {
+        const schedule = await this.prisma.accountDeletionSchedule.findUnique({ where: { userId } });
+        return schedule ? toStatus(schedule) : null;
+    }
+
+    /** Permanently deletes every schedule whose grace period has ended. Failed rows are retried on the next run. */
+    async purgeDue(now: Date, limit = 25): Promise<PurgeResult> {
+        const due = await this.prisma.accountDeletionSchedule.findMany({
+            where: { purgeAfter: { lte: now } },
+            orderBy: { purgeAfter: "asc" },
+            take: limit,
+        });
+
+        const result: PurgeResult = { purged: 0, failed: 0 };
+        for (const schedule of due) {
+            let stage = "osu_guessr";
+            try {
+                if (schedule.deleteOsuGuessr && schedule.osuId) await this.services.osuGuessr(schedule.osuId, "purge");
+                stage = "bot";
+                if (schedule.deleteBot && schedule.discordId) await this.services.bot.deleteUser(schedule.discordId);
+                stage = "web";
+                await this.prisma.$transaction(async (transaction) => {
+                    if (schedule.deleteAccount) {
+                        // Refresh tokens block user deletion (ON DELETE RESTRICT); access tokens and consents would otherwise
+                        // survive with their user link cleared. Deleting the user cascades to the schedule row.
+                        await transaction.oauthAccessToken.deleteMany({ where: { userId: schedule.userId } });
+                        await transaction.oauthRefreshToken.deleteMany({ where: { userId: schedule.userId } });
+                        await transaction.oauthConsent.deleteMany({ where: { userId: schedule.userId } });
+                        await transaction.user.deleteMany({ where: { id: schedule.userId } });
+                    } else {
+                        await transaction.accountDeletionSchedule.deleteMany({ where: { id: schedule.id } });
+                    }
+                });
+                result.purged += 1;
+            } catch {
+                result.failed += 1;
+                await this.prisma.accountDeletionSchedule
+                    .updateMany({ where: { id: schedule.id }, data: { lastAttemptAt: now, lastError: `${stage}_failed` } })
+                    .catch(() => undefined);
+            }
+        }
+        return result;
+    }
+
+    private async getProviderIds(userId: string): Promise<{ discordId: string | null; osuId: string | null }> {
+        const accounts = await this.prisma.account.findMany({
+            where: { userId, providerId: { in: ["discord", "osu"] } },
+            select: { providerId: true, accountId: true },
+        });
+        return {
+            discordId: accounts.find((account) => account.providerId === "discord")?.accountId ?? null,
+            osuId: accounts.find((account) => account.providerId === "osu")?.accountId ?? null,
+        };
+    }
+
+    private async hideLinkedData(scopes: DeletionScopes, ids: { discordId: string | null; osuId: string | null }): Promise<void> {
+        try {
+            if (scopes.osuGuessr && ids.osuId) await this.services.osuGuessr(ids.osuId, "hide");
+            if (scopes.bot && ids.discordId) await this.services.bot.pauseLink(ids.discordId);
+        } catch {
+            if (scopes.osuGuessr && ids.osuId) await this.services.osuGuessr(ids.osuId, "restore").catch(() => undefined);
+            throw new AccountDeletionStoreError("service_unavailable");
+        }
+    }
+
+    private async restoreLinkedData(userId: string, scopes: DeletionScopes, osuId: string | null): Promise<void> {
+        if (scopes.osuGuessr && osuId) await this.services.osuGuessr(osuId, "restore");
+        if (scopes.bot) await this.services.bot.restoreLink(userId);
+    }
+}
+
+/** Bot data only exists for Discord-linked accounts and osu!guessr data only for osu!-linked ones. */
+function resolveScopes(requested: DeletionScopes, ids: { discordId: string | null; osuId: string | null }): DeletionScopes {
+    if (requested.osuGuessr && !ids.osuId) throw new AccountDeletionStoreError("scope_unavailable");
+    if (requested.bot && !ids.discordId && !requested.account) throw new AccountDeletionStoreError("scope_unavailable");
+    return { ...requested, bot: requested.bot && ids.discordId !== null };
+}
+
+async function assertReauthenticated(prisma: PrismaClient, userId: string, tokenHash: string, now: Date): Promise<void> {
+    const challenge = await getChallenge(prisma, userId, tokenHash);
+    assertChallengeUsable(challenge, now);
+    if (!challenge.reauthenticatedAt || now.getTime() - challenge.reauthenticatedAt.getTime() >= REAUTHENTICATION_WINDOW_MS) {
+        throw new AccountDeletionStoreError("challenge_stale");
     }
 }
 
@@ -108,4 +263,12 @@ async function getChallenge(prisma: Prisma.TransactionClient, userId: string, to
 function assertChallengeUsable(challenge: { consumedAt: Date | null; expiresAt: Date }, now: Date): void {
     if (challenge.consumedAt) throw new AccountDeletionStoreError("challenge_invalid");
     if (challenge.expiresAt.getTime() <= now.getTime()) throw new AccountDeletionStoreError("challenge_stale");
+}
+
+function toScopes(schedule: Pick<ScheduleRow, "deleteAccount" | "deleteBot" | "deleteOsuGuessr">): DeletionScopes {
+    return { account: schedule.deleteAccount, bot: schedule.deleteBot, osuGuessr: schedule.deleteOsuGuessr };
+}
+
+function toStatus(schedule: ScheduleRow): DeletionStatus {
+    return { scopes: toScopes(schedule), requestedAt: schedule.requestedAt, purgeAfter: schedule.purgeAfter };
 }

@@ -34,7 +34,7 @@ export default function Login({ osuGuessrClientId = "" }: { osuGuessrClientId?: 
         [osuGuessrClientId, search],
     );
     const oauthError = useMemo(() => readOAuthError(search, osuAuthorization ? "osu" : "discord"), [search, osuAuthorization]);
-    const accountDeleted = useMemo(() => new URLSearchParams(search).get("deleted") === "1", [search]);
+    const deletionScheduled = useMemo(() => new URLSearchParams(search).get("deletion") === "scheduled", [search]);
     const initiationPending = useRef(false);
     const [redirectingProvider, setRedirectingProvider] = useState<IdentityProvider | null>(null);
     const [localError, setLocalError] = useState<string | null>(null);
@@ -82,7 +82,11 @@ export default function Login({ osuGuessrClientId = "" }: { osuGuessrClientId?: 
             <AuthPanel width="compact">
                 <LoginPanel
                     error={error}
-                    status={accountDeleted ? "Your Hanami account was deleted." : null}
+                    status={
+                        deletionScheduled
+                            ? "Your data will be deleted in 14 days. Sign in again before then to cancel from account privacy."
+                            : null
+                    }
                     mode={osuAuthorization ? (osuGuessrAuthorization ? "osu-guessr" : "osu") : "general"}
                     redirectingProvider={redirectingProvider}
                     onSignIn={handleSignIn}
@@ -122,7 +126,7 @@ export function LoginPanel({
 
             {status && (
                 <div className="mt-7 border-l-2 border-success py-1 pl-4" role="status">
-                    <p className="text-[0.7rem] font-semibold tracking-[0.08em] text-success uppercase">Account deleted</p>
+                    <p className="text-[0.7rem] font-semibold tracking-[0.08em] text-success uppercase">Deletion scheduled</p>
                     <p className="mt-1.5 max-w-[54ch] text-[0.84rem] leading-[1.6] text-body">{status}</p>
                 </div>
             )}

@@ -53,6 +53,10 @@ const successfulExpandedTokenHistory = [
     ...successfulFinalHistory,
     { migrationName: "3_expand_oauth_authorization_code_ids", finished: true, rolledBack: false },
 ];
+const successfulScheduledDeletionHistory = [
+    ...successfulExpandedTokenHistory,
+    { migrationName: "4_scheduled_account_deletion", finished: true, rolledBack: false },
+];
 
 describe("classifyWebDatabaseTables", () => {
     test("recognizes an empty database", () => {
@@ -91,6 +95,15 @@ describe("classifyWebDatabaseTables", () => {
             classifyWebDatabaseTables({
                 tableNames: ["_prisma_migrations", ...finalTables],
                 prismaMigrations: successfulExpandedTokenHistory,
+            }),
+        ).toBe("prisma-history");
+    });
+
+    test("recognizes the scheduled deletion schema on restart", () => {
+        expect(
+            classifyWebDatabaseTables({
+                tableNames: ["_prisma_migrations", ...finalTables, "accountDeletionSchedule"],
+                prismaMigrations: successfulScheduledDeletionHistory,
             }),
         ).toBe("prisma-history");
     });

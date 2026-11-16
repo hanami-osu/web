@@ -18,6 +18,7 @@ model User {
   sessions                        Session[]
   accounts                        Account[]
   accountDeletionReauthChallenges AccountDeletionReauthChallenge[]
+  accountDeletionSchedule         AccountDeletionSchedule?
   osuProfile                      OsuProfile?
   oauthClients                    OauthClient[]                    @relation("OauthClientUser")
   oauthRefreshTokens              OauthRefreshToken[]              @relation("OauthRefreshTokenUser")
@@ -91,6 +92,25 @@ model AccountDeletionReauthChallenge {
   @@index([userId, tokenHash], map: "accountDeletionReauthChallenge_lookup_idx")
   @@index([expiresAt], map: "accountDeletionReauthChallenge_expiry_idx")
   @@map("accountDeletionReauthChallenge")
+}
+
+model AccountDeletionSchedule {
+  id              String    @id @db.VarChar(36)
+  userId          String    @db.VarChar(36)
+  deleteAccount   Boolean
+  deleteBot       Boolean
+  deleteOsuGuessr Boolean
+  discordId       String?   @db.VarChar(255)
+  osuId           String?   @db.VarChar(255)
+  requestedAt     DateTime  @db.Timestamp(3)
+  purgeAfter      DateTime  @db.Timestamp(3)
+  lastAttemptAt   DateTime? @db.Timestamp(3)
+  lastError       String?   @db.VarChar(64)
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "accountDeletionSchedule_user_fk")
+
+  @@unique([userId], map: "accountDeletionSchedule_user_unique")
+  @@index([purgeAfter], map: "accountDeletionSchedule_purge_idx")
+  @@map("accountDeletionSchedule")
 }
 
 model DiscordLinkTicket {

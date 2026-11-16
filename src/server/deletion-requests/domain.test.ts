@@ -1,12 +1,34 @@
 import { describe, expect, it } from "bun:test";
 
-import { createChallengeToken, hashChallengeToken, isFreshAuthentication, isValidConfirmationPhrase } from "./domain";
+import {
+    createChallengeToken,
+    hashChallengeToken,
+    isFreshAuthentication,
+    isValidConfirmationPhrase,
+    normalizeDeletionScopes,
+} from "./domain";
 
 describe("account deletion domain", () => {
     it("accepts the exact confirmation phrase after whitespace normalization", () => {
-        expect(isValidConfirmationPhrase("  DELETE  MY HANAMI\nACCOUNT ")).toBe(true);
-        expect(isValidConfirmationPhrase("delete my hanami account")).toBe(false);
-        expect(isValidConfirmationPhrase("DELETE MY ACCOUNT")).toBe(false);
+        expect(isValidConfirmationPhrase("  DELETE  MY\nDATA ")).toBe(true);
+        expect(isValidConfirmationPhrase("delete my data")).toBe(false);
+        expect(isValidConfirmationPhrase("DELETE MY HANAMI ACCOUNT")).toBe(false);
+    });
+
+    it("requires at least one boolean scope and folds Bot data into account deletion", () => {
+        expect(normalizeDeletionScopes({ account: true, bot: false, osuGuessr: false })).toEqual({
+            account: true,
+            bot: true,
+            osuGuessr: false,
+        });
+        expect(normalizeDeletionScopes({ account: false, bot: false, osuGuessr: true })).toEqual({
+            account: false,
+            bot: false,
+            osuGuessr: true,
+        });
+        expect(normalizeDeletionScopes({ account: false, bot: false, osuGuessr: false })).toBeNull();
+        expect(normalizeDeletionScopes({ account: "yes", bot: false, osuGuessr: false })).toBeNull();
+        expect(normalizeDeletionScopes(null)).toBeNull();
     });
 
     it("uses a 15-minute session freshness window", () => {

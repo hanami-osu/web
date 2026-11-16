@@ -168,12 +168,12 @@ export const routeMetadata = {
     },
     "/profile/privacy": {
         title: "Account privacy | Hanami",
-        description: "View your account data and delete your Hanami account.",
+        description: "View your account data and choose what to delete.",
         indexable: false,
     },
     "/profile/privacy/confirm": {
-        title: "Confirm account deletion | Hanami",
-        description: "Permanently delete website and Hanami Bot account data after fresh Discord authentication.",
+        title: "Confirm data deletion | Hanami",
+        description: "Confirm which Hanami, Hanami Bot, and osu!guessr data to delete after a 14-day waiting period.",
         indexable: false,
     },
     "/login": {

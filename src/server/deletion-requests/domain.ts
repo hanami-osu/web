@@ -1,5 +1,21 @@
-export const DELETION_CONFIRMATION_PHRASE = "DELETE MY HANAMI ACCOUNT";
+export const DELETION_CONFIRMATION_PHRASE = "DELETE MY DATA";
 export const REAUTHENTICATION_WINDOW_MS = 15 * 60 * 1000;
+export const DELETION_GRACE_PERIOD_MS = 14 * 24 * 60 * 60 * 1000;
+
+export interface DeletionScopes {
+    account: boolean;
+    bot: boolean;
+    osuGuessr: boolean;
+}
+
+/** Deleting the Hanami account always removes Bot data, because the Bot link belongs to the account. */
+export function normalizeDeletionScopes(value: unknown): DeletionScopes | null {
+    if (typeof value !== "object" || value === null) return null;
+    const { account, bot, osuGuessr } = value as Record<string, unknown>;
+    if (typeof account !== "boolean" || typeof bot !== "boolean" || typeof osuGuessr !== "boolean") return null;
+    if (!account && !bot && !osuGuessr) return null;
+    return { account, bot: bot || account, osuGuessr };
+}
 
 export function normalizeConfirmationPhrase(value: string): string {
     return value.trim().replace(/\s+/g, " ");

@@ -1,6 +1,12 @@
 import { describe, expect, it } from "bun:test";
 
-import { clearPendingDeletionChallenge, prepareDeletionReauthentication, readPendingDeletionChallenge } from "./deletion-reauth";
+import {
+    clearPendingDeletionChallenge,
+    prepareDeletionReauthentication,
+    readDeletionScopes,
+    readPendingDeletionChallenge,
+    withDeletionScopes,
+} from "./deletion-reauth";
 
 function createStorage() {
     const values = new Map<string, string>();
@@ -40,5 +46,21 @@ describe("deletion reauthentication navigation", () => {
 
         clearPendingDeletionChallenge(storage);
         expect(readPendingDeletionChallenge(storage)).toBeNull();
+    });
+
+    it("keeps the chosen scopes in the callback query and drops the challenge fragment", () => {
+        const storage = createStorage();
+        const challenge = "c".repeat(43);
+        const path = withDeletionScopes(`/profile/privacy/confirm#challenge=${challenge}`, { account: false, bot: false, osuGuessr: true });
+
+        expect(path).toBe(`/profile/privacy/confirm?scopes=osuGuessr#challenge=${challenge}`);
+        expect(prepareDeletionReauthentication(path, storage)).toBe("/profile/privacy/confirm?scopes=osuGuessr");
+        expect(readPendingDeletionChallenge(storage)).toBe(challenge);
+    });
+
+    it("reads scopes and always includes Bot data with the account", () => {
+        expect(readDeletionScopes("?scopes=account")).toEqual({ account: true, bot: true, osuGuessr: false });
+        expect(readDeletionScopes("?scopes=bot,osuGuessr")).toEqual({ account: false, bot: true, osuGuessr: true });
+        expect(readDeletionScopes("")).toEqual({ account: false, bot: false, osuGuessr: false });
     });
 });

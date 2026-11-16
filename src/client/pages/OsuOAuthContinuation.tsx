@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { continueOAuthPostLogin, signOutFromHanami, useSession } from "@/client/lib/auth";
+import { formatDeletionDate } from "@/client/lib/deletion-reauth";
 import { getSignedOAuthQuery, isOsuOAuthContinuationRequest, readOAuthError } from "@/client/lib/auth-navigation";
 import { routes } from "@/client/routes/paths";
 import { useRawSearch } from "@/client/lib/use-raw-search";
@@ -12,7 +13,11 @@ import { AuthLayout, AuthPanel } from "@/components/account/account-shell";
 import { Eyebrow } from "@/components/marketing";
 import { primaryActionClass, textButtonClass } from "@/components/ui/action-styles";
 
-type ContinuationState = "ready" | "connecting" | "conflict" | "continuing" | "error";
+type ContinuationState = "ready" | "connecting" | "conflict" | "continuing" | "pendingDeletion" | "error";
+
+interface DeletionStatusResponse {
+    scheduled: { purgeAfter: string } | null;
+}
 
 export default function OsuOAuthContinuation() {
     const { data: session, isPending } = useSession();
@@ -25,6 +30,25 @@ export default function OsuOAuthContinuation() {
     const continued = useRef(false);
     const [state, setState] = useState<ContinuationState>("ready");
     const [error, setError] = useState<string | null>(null);
+    const [deletionChecked, setDeletionChecked] = useState(false);
+    const [purgeAfter, setPurgeAfter] = useState<string | null>(null);
+    const userId = session?.user.id;
+
+    useEffect(() => {
+        if (!userId || !oauthQuery) return;
+        const controller = new AbortController();
+        fetchJson<DeletionStatusResponse>("/api/account-deletion/status", controller.signal)
+            .then(({ scheduled }) => {
+                if (!scheduled) return;
+                setPurgeAfter(scheduled.purgeAfter);
+                setState("pendingDeletion");
+            })
+            .catch(() => undefined)
+            .finally(() => {
+                if (!controller.signal.aborted) setDeletionChecked(true);
+            });
+        return () => controller.abort();
+    }, [oauthQuery, userId]);
 
     useEffect(() => {
         if (rawSearch === null || isPending) return;
@@ -43,7 +67,7 @@ export default function OsuOAuthContinuation() {
             setError(readOAuthError(search, "osu"));
             return;
         }
-        if (!linked || continued.current) return;
+        if (!deletionChecked || purgeAfter || !linked || continued.current) return;
 
         continued.current = true;
         setState("continuing");
@@ -53,7 +77,26 @@ export default function OsuOAuthContinuation() {
                 setState("error");
                 setError("Hanami could not finish the authorization request. Start again.");
             });
-    }, [isPending, linked, oauthErrorCode, oauthQuery, rawSearch, router, search, session]);
+    }, [deletionChecked, isPending, linked, oauthErrorCode, oauthQuery, purgeAfter, rawSearch, router, search, session]);
+
+    async function cancelDeletion() {
+        setState("continuing");
+        setError(null);
+        try {
+            await fetchJson<{ cancelled: true }>("/api/account-deletion/schedule", undefined, { method: "DELETE" });
+            setPurgeAfter(null);
+            const { loginMethods } = await fetchJson<{ loginMethods: { provider: string }[] }>("/api/account/providers");
+            if (!loginMethods.some((method) => method.provider === "osu")) {
+                setState("ready");
+                return;
+            }
+            continued.current = true;
+            window.location.assign(await continueOAuthPostLogin());
+        } catch {
+            setState("error");
+            setError("The scheduled deletion could not be cancelled. Try again from account privacy.");
+        }
+    }
 
     async function connectOsu() {
         if (!oauthQuery) return;
@@ -94,8 +137,10 @@ export default function OsuOAuthContinuation() {
     return (
         <AuthLayout>
             <OsuOAuthContinuationPanel
-                state={isPending || rawSearch === null ? "continuing" : state}
+                state={isPending || rawSearch === null || (session && oauthQuery && !deletionChecked) ? "continuing" : state}
                 error={error}
+                purgeAfter={purgeAfter}
+                onCancelDeletion={cancelDeletion}
                 onConnect={connectOsu}
                 onRestart={restartOsuSignIn}
             />
@@ -106,13 +151,17 @@ export default function OsuOAuthContinuation() {
 export function OsuOAuthContinuationPanel({
     state,
     error = null,
+    purgeAfter = null,
     onConnect,
     onRestart,
+    onCancelDeletion,
 }: {
     state: ContinuationState;
     error?: string | null;
+    purgeAfter?: string | null;
     onConnect?: () => void;
     onRestart?: () => void;
+    onCancelDeletion?: () => void;
 }) {
     const isBusy = state === "connecting" || state === "continuing";
 
@@ -134,6 +183,21 @@ export function OsuOAuthContinuationPanel({
                     <button className={`${primaryActionClass} mt-8`} type="button" onClick={onRestart} disabled={isBusy}>
                         Sign in with that osu! account
                     </button>
+                </>
+            ) : state === "pendingDeletion" ? (
+                <>
+                    <h1>Deletion scheduled</h1>
+                    <p>
+                        Data on this Hanami account is scheduled for deletion
+                        {purgeAfter ? ` on ${formatDeletionDate(purgeAfter)}` : ""}. Cancel the deletion to keep your data and continue
+                        signing in.
+                    </p>
+                    <button className={`${primaryActionClass} mt-8`} type="button" onClick={onCancelDeletion}>
+                        Cancel deletion and continue
+                    </button>
+                    <a className={`${textButtonClass} mt-4`} href={routes.profilePrivacy}>
+                        Review in account privacy
+                    </a>
                 </>
             ) : state === "continuing" ? (
                 <>

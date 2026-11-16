@@ -3,6 +3,14 @@ import { validateReturnTo } from "./auth-navigation";
 
 const pendingChallengeKey = "hanami.account-deletion.challenge";
 
+export interface DeletionScopes {
+    account: boolean;
+    bot: boolean;
+    osuGuessr: boolean;
+}
+
+const scopeKeys = ["account", "bot", "osuGuessr"] as const;
+
 interface SessionStorageLike {
     getItem(key: string): string | null;
     setItem(key: string, value: string): void;
@@ -14,8 +22,10 @@ export function prepareDeletionReauthentication(confirmationPath: string, storag
     const hashIndex = safePath.indexOf("#");
     const callbackURL = hashIndex === -1 ? safePath : safePath.slice(0, hashIndex);
     const challenge = hashIndex === -1 ? null : new URLSearchParams(safePath.slice(hashIndex + 1)).get("challenge");
+    const queryIndex = callbackURL.indexOf("?");
+    const callbackPath = queryIndex === -1 ? callbackURL : callbackURL.slice(0, queryIndex);
 
-    if (callbackURL !== routes.profilePrivacyConfirm || !isChallenge(challenge)) {
+    if (callbackPath !== routes.profilePrivacyConfirm || !isChallenge(challenge)) {
         throw new Error("The deletion confirmation could not be prepared. Please try again.");
     }
 
@@ -29,6 +39,25 @@ export function prepareDeletionReauthentication(confirmationPath: string, storag
     }
 
     return callbackURL;
+}
+
+/** Carries the chosen scopes through the sign-in redirect in the query, which Better Auth preserves, unlike the fragment. */
+export function withDeletionScopes(confirmationPath: string, scopes: DeletionScopes): string {
+    const hashIndex = confirmationPath.indexOf("#");
+    const path = hashIndex === -1 ? confirmationPath : confirmationPath.slice(0, hashIndex);
+    const hash = hashIndex === -1 ? "" : confirmationPath.slice(hashIndex);
+    const selected = scopeKeys.filter((key) => scopes[key]).join(",");
+    return `${path}?scopes=${selected}${hash}`;
+}
+
+export function readDeletionScopes(search: string): DeletionScopes {
+    const selected = new Set(new URLSearchParams(search).get("scopes")?.split(",") ?? []);
+    const account = selected.has("account");
+    return { account, bot: account || selected.has("bot"), osuGuessr: selected.has("osuGuessr") };
+}
+
+export function formatDeletionDate(value: string): string {
+    return new Date(value).toLocaleDateString(undefined, { dateStyle: "long" });
 }
 
 export function readPendingDeletionChallenge(storage?: SessionStorageLike): string | null {

@@ -3,19 +3,26 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
-import { reauthenticateWithDiscord } from "@/client/lib/auth";
+import { reauthenticate, type IdentityProvider } from "@/client/lib/auth";
 import { readOAuthError } from "@/client/lib/auth-navigation";
-import { clearPendingDeletionChallenge, prepareDeletionReauthentication, readPendingDeletionChallenge } from "@/client/lib/deletion-reauth";
+import {
+    clearPendingDeletionChallenge,
+    formatDeletionDate,
+    prepareDeletionReauthentication,
+    readDeletionScopes,
+    readPendingDeletionChallenge,
+    withDeletionScopes,
+    type DeletionScopes,
+} from "@/client/lib/deletion-reauth";
 import { fetchJson } from "@/client/lib/fetch-json";
 import { routes } from "@/client/routes/paths";
 import { useRawSearch } from "@/client/lib/use-raw-search";
 import { AccountLayout, AccountPage, AccountPageIntro, AccountPanel, AccountPanelHeader } from "@/components/account/account-shell";
 import { useAuthenticatedSession } from "@/components/account/authenticated-route";
-import { ConfirmationPage, ErrorMessage } from "@/components/account/privacy-views";
+import { ConfirmationPage, DeletionScopePicker, ErrorMessage, PendingDeletionBanner } from "@/components/account/privacy-views";
+import type { LoginMethod } from "@/components/account/profile-sections";
 import { PrefetchLink } from "@/components/navigation/prefetch-link";
-import { dangerOutlineActionClass, primaryActionClass } from "@/components/ui/action-styles";
 import { legalContacts } from "@/data/legal";
-import { cn } from "@/lib/utils";
 
 interface OsuLinkStatus {
     linked: boolean;
@@ -28,6 +35,14 @@ interface StartResponse {
     confirmationPath: string;
 }
 
+export interface ScheduledDeletion {
+    scopes: DeletionScopes;
+    requestedAt: string;
+    purgeAfter: string;
+}
+
+const noScopes: DeletionScopes = { account: false, bot: false, osuGuessr: false };
+
 export default function AccountPrivacy() {
     const session = useAuthenticatedSession();
     const pathname = usePathname();
@@ -39,7 +54,11 @@ export default function AccountPrivacy() {
     const [osuLink, setOsuLink] = useState<OsuLinkStatus | null>(null);
     const [osuLinkUnavailable, setOsuLinkUnavailable] = useState(false);
     const [loading, setLoading] = useState(true);
-    const [action, setAction] = useState<"starting" | "verifying" | "deleting" | null>(null);
+    const [loginMethods, setLoginMethods] = useState<LoginMethod[]>([]);
+    const [scheduled, setScheduled] = useState<ScheduledDeletion | null>(null);
+    const [scopes, setScopes] = useState<DeletionScopes>(noScopes);
+    const [reauthProvider, setReauthProvider] = useState<IdentityProvider | null>(null);
+    const [action, setAction] = useState<"starting" | "verifying" | "deleting" | "cancelling" | null>(null);
     const [confirmationReady, setConfirmationReady] = useState(false);
     const [typedPhrase, setTypedPhrase] = useState("");
     const [error, setError] = useState<string | null>(null);
@@ -49,7 +68,7 @@ export default function AccountPrivacy() {
         const pendingChallenge = isConfirmation ? readPendingDeletionChallenge() : null;
         if (hashChallenge || pendingChallenge) setChallenge(hashChallenge ?? pendingChallenge);
         if (isConfirmation && (hashChallenge || pendingChallenge)) clearPendingDeletionChallenge();
-        if (window.location.hash) window.history.replaceState(null, "", window.location.pathname);
+        if (window.location.hash) window.history.replaceState(null, "", window.location.pathname + window.location.search);
     }, [isConfirmation, pathname]);
 
     useEffect(() => {
@@ -61,15 +80,35 @@ export default function AccountPrivacy() {
 
         const controller = new AbortController();
         setLoading(true);
-        fetchJson<OsuLinkStatus>("/api/osu-link/status", controller.signal)
+        const osuLinkRequest = fetchJson<OsuLinkStatus>("/api/osu-link/status", controller.signal)
             .then((result) => {
                 setOsuLink(result);
                 setOsuLinkUnavailable(false);
             })
-            .catch(() => setOsuLinkUnavailable(true))
-            .finally(() => setLoading(false));
+            .catch(() => setOsuLinkUnavailable(true));
+        const providersRequest = fetchJson<{ loginMethods: LoginMethod[] }>("/api/account/providers", controller.signal).then(
+            ({ loginMethods: methods }) => {
+                setLoginMethods(methods);
+                setReauthProvider((current) => current ?? methods[0]?.provider ?? null);
+            },
+        );
+        const statusRequest = fetchJson<{ scheduled: ScheduledDeletion | null }>("/api/account-deletion/status", controller.signal).then(
+            (result) => setScheduled(result.scheduled),
+        );
+        Promise.all([osuLinkRequest, providersRequest, statusRequest])
+            .catch(() => {
+                if (!controller.signal.aborted) setError("Account data could not be loaded. Refresh the page to try again.");
+            })
+            .finally(() => {
+                if (!controller.signal.aborted) setLoading(false);
+            });
         return () => controller.abort();
     }, [isConfirmation, rawSearch, session.user.id]);
+
+    useEffect(() => {
+        if (rawSearch === null || isConfirmation) return;
+        if (new URLSearchParams(rawSearch).get("delete") === "osu-guessr") setScopes((current) => ({ ...current, osuGuessr: true }));
+    }, [isConfirmation, rawSearch]);
 
     useEffect(() => {
         if (rawSearch === null) return;
@@ -91,7 +130,7 @@ export default function AccountPrivacy() {
                 if (active) setConfirmationReady(true);
             })
             .catch(() => {
-                if (active) setError("Fresh Discord authentication could not be confirmed. Start again from account privacy.");
+                if (active) setError("Your recent sign-in could not be confirmed. Start again from account privacy.");
             })
             .finally(() => {
                 if (active) setAction(null);
@@ -101,42 +140,60 @@ export default function AccountPrivacy() {
         };
     }, [challenge, confirmationReady, isConfirmation, session.user.id]);
 
-    async function startAccountDeletion() {
+    async function startDeletion() {
+        if (!reauthProvider) return;
         setAction("starting");
         setError(null);
         try {
             const result = await fetchJson<StartResponse>("/api/account-deletion/reauth/start", undefined, jsonRequest({}));
+            const confirmationPath = withDeletionScopes(result.confirmationPath, scopes);
             if (result.reauthenticationRequired) {
-                const callbackURL = prepareDeletionReauthentication(result.confirmationPath);
+                const callbackURL = prepareDeletionReauthentication(confirmationPath);
                 try {
-                    await reauthenticateWithDiscord(callbackURL, `${routes.profilePrivacy}?reauth=1`);
+                    await reauthenticate(reauthProvider, callbackURL, `${routes.profilePrivacy}?reauth=1`);
                 } catch (reauthenticationError) {
                     clearPendingDeletionChallenge();
                     throw reauthenticationError;
                 }
                 return;
             }
-            router.push(result.confirmationPath);
+            router.push(confirmationPath);
         } catch (requestError) {
-            setError(requestError instanceof Error ? requestError.message : "Account deletion could not be started.");
+            setError(requestError instanceof Error ? requestError.message : "Deletion could not be started.");
             setAction(null);
         }
     }
 
-    async function deleteAccount(event: FormEvent<HTMLFormElement>) {
+    async function scheduleDeletion(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
         if (!challenge) return;
+        const confirmedScopes = readDeletionScopes(search);
         setAction("deleting");
         setError(null);
         try {
-            await fetchJson<{ deleted: true }>(
-                "/api/account-deletion",
+            await fetchJson<{ scheduled: ScheduledDeletion }>(
+                "/api/account-deletion/schedule",
                 undefined,
-                jsonRequest({ challenge, confirmationPhrase: typedPhrase }, "DELETE"),
+                jsonRequest({ challenge, confirmationPhrase: typedPhrase, scopes: confirmedScopes }),
             );
-            window.location.replace(`${routes.login}?deleted=1`);
+            // Scheduling the account deletion signs it out everywhere.
+            if (confirmedScopes.account) window.location.replace(`${routes.login}?deletion=scheduled`);
+            else window.location.replace(routes.profilePrivacy);
         } catch (requestError) {
-            setError(requestError instanceof Error ? requestError.message : "The account could not be deleted.");
+            setError(requestError instanceof Error ? requestError.message : "The deletion could not be scheduled.");
+            setAction(null);
+        }
+    }
+
+    async function cancelDeletion() {
+        setAction("cancelling");
+        setError(null);
+        try {
+            await fetchJson<{ cancelled: true }>("/api/account-deletion/schedule", undefined, { method: "DELETE" });
+            setScheduled(null);
+        } catch (requestError) {
+            setError(requestError instanceof Error ? requestError.message : "The deletion could not be cancelled.");
+        } finally {
             setAction(null);
         }
     }
@@ -144,6 +201,7 @@ export default function AccountPrivacy() {
     if (isConfirmation) {
         return (
             <ConfirmationPage
+                scopes={readDeletionScopes(search)}
                 ready={confirmationReady}
                 verifying={action === "verifying"}
                 deleting={action === "deleting"}
@@ -151,7 +209,7 @@ export default function AccountPrivacy() {
                 phrase={typedPhrase}
                 error={error}
                 onPhraseChange={setTypedPhrase}
-                onSubmit={deleteAccount}
+                onSubmit={scheduleDeletion}
             />
         );
     }
@@ -162,7 +220,7 @@ export default function AccountPrivacy() {
                 <AccountPageIntro
                     eyebrow="Hanami account"
                     title="Account privacy"
-                    description="View your account data, request help, or delete your Hanami account."
+                    description="View your account data, request help, or choose what to delete."
                 >
                     <nav
                         className="mt-6 flex flex-wrap gap-x-6 gap-y-[0.65rem] text-[0.82rem] [&_a]:text-muted [&_a]:underline [&_a]:decoration-white/40 [&_a]:underline-offset-[0.25em]"
@@ -176,6 +234,15 @@ export default function AccountPrivacy() {
                 </AccountPageIntro>
 
                 {error && <ErrorMessage>{error}</ErrorMessage>}
+
+                {scheduled && (
+                    <PendingDeletionBanner
+                        scopes={scheduled.scopes}
+                        purgeAfter={formatDeletionDate(scheduled.purgeAfter)}
+                        cancelling={action === "cancelling"}
+                        onCancel={cancelDeletion}
+                    />
+                )}
 
                 <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(18rem,0.85fr)] lg:grid-rows-[auto_1fr]">
                     <AccountPanel className="lg:row-span-2 lg:grid lg:grid-rows-subgrid lg:gap-0" aria-labelledby="identity-title">
@@ -214,27 +281,19 @@ export default function AccountPrivacy() {
                     >
                         <AccountPanelHeader
                             id="delete-title"
-                            title="Delete account"
-                            description="Permanently remove this Hanami account and the linked data listed here."
+                            title="Delete data"
+                            description="Choose what to delete. Nothing is removed for 14 days, and you can cancel until then."
                         />
-                        <div className="p-[clamp(1.35rem,3vw,2rem)]">
-                            <p className="text-[0.84rem] leading-[1.7] text-muted">
-                                This deletes your Hanami profile, linked sign-in methods, sessions, and Hanami Bot preferences. It cannot be
-                                undone.
-                            </p>
-                            <button
-                                className={cn(primaryActionClass, dangerOutlineActionClass, "mt-6 w-full justify-center")}
-                                type="button"
-                                onClick={startAccountDeletion}
-                                disabled={loading || action === "starting"}
-                            >
-                                {action === "starting" ? "Preparing verification…" : "Delete account"}
-                            </button>
-                            <p className="mt-5 text-[0.74rem] leading-[1.6] text-quiet">
-                                Your Discord and osu! accounts are not deleted. A recent Discord sign-in and typed confirmation may be
-                                required.
-                            </p>
-                        </div>
+                        <DeletionScopePicker
+                            scopes={scopes}
+                            loginMethods={loginMethods}
+                            reauthProvider={reauthProvider}
+                            disabled={loading || Boolean(scheduled)}
+                            starting={action === "starting"}
+                            onScopesChange={setScopes}
+                            onReauthProviderChange={setReauthProvider}
+                            onContinue={startDeletion}
+                        />
                     </AccountPanel>
                 </div>
 
@@ -245,8 +304,8 @@ export default function AccountPrivacy() {
                         description="For access, correction, restriction, objection, or an account you can no longer reach."
                     />
                     <p className="p-[clamp(1.35rem,3vw,2rem)] text-[0.84rem] leading-[1.7] text-muted [&_a]:text-white [&_a]:underline [&_a]:decoration-white/45 [&_a]:underline-offset-[0.22em]">
-                        Email <a href={`mailto:${legalContacts.privacy}`}>{legalContacts.privacy}</a> for help with data outside immediate
-                        account deletion. Never send passwords, tokens, cookies, API keys, or backup codes. Read the{" "}
+                        Email <a href={`mailto:${legalContacts.privacy}`}>{legalContacts.privacy}</a> for help with data you cannot delete
+                        here. Never send passwords, tokens, cookies, API keys, or backup codes. Read the{" "}
                         <PrefetchLink href={routes.legalDataDeletion}>data deletion details</PrefetchLink> for what is deleted from each
                         service.
                     </p>
@@ -256,9 +315,9 @@ export default function AccountPrivacy() {
     );
 }
 
-function jsonRequest(body: Record<string, unknown>, method: "POST" | "DELETE" = "POST"): RequestInit {
+function jsonRequest(body: Record<string, unknown>): RequestInit {
     return {
-        method,
+        method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
     };

@@ -56,14 +56,14 @@ export async function signInWithOsu(returnTo?: string, execute: OsuSignInOperati
     return result;
 }
 
-export async function reauthenticateWithDiscord(callbackURL: string, errorCallbackURL: string) {
-    const result = await signIn.social({
-        provider: "discord",
+export async function reauthenticate(provider: IdentityProvider, callbackURL: string, errorCallbackURL: string) {
+    const urls = {
         callbackURL: validateReturnTo(callbackURL),
         errorCallbackURL: validateReturnTo(errorCallbackURL, "/profile/privacy"),
-    });
+    };
+    const result = provider === "osu" ? await signInWithOsuProvider({ provider, ...urls }) : await signIn.social({ provider, ...urls });
 
-    if (result.error) throw new Error("Discord reauthentication could not be started.");
+    if (result.error) throw new Error(`${provider === "osu" ? "osu!" : "Discord"} reauthentication could not be started.`);
     return result;
 }
 

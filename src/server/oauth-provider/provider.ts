@@ -6,7 +6,13 @@ const coreClaimNames = ["sub", "iss", "aud", "exp", "iat", "sid", "scope", "azp"
 export const osuOAuthContinuationPath = "/oauth/continue/osu";
 export const oauthConsentPath = "/oauth/consent";
 
-export function createHanamiOAuthProviderPlugin(database: OsuClaimsDatabase) {
+export interface OAuthProviderDatabase extends OsuClaimsDatabase {
+    accountDeletionSchedule: {
+        count(args: { where: { userId: string } }): Promise<number>;
+    };
+}
+
+export function createHanamiOAuthProviderPlugin(database: OAuthProviderDatabase) {
     const customClaims = async ({ user, scopes }: { user?: { id: string } | null; scopes: readonly string[] }) => {
         if (!user) return {};
         const claims = await buildOsuClaims(user.id, scopes, database);
@@ -23,6 +29,8 @@ export function createHanamiOAuthProviderPlugin(database: OsuClaimsDatabase) {
             page: osuOAuthContinuationPath,
             consentReferenceId: async () => undefined,
             shouldRedirect: async ({ user, scopes }) => {
+                // Accounts with a scheduled deletion must cancel it before signing in to an app.
+                if (await database.accountDeletionSchedule.count({ where: { userId: user.id } })) return true;
                 if (!scopes.includes("osu")) return false;
                 const profile = await database.osuProfile.findUnique({
                     where: { userId: user.id },

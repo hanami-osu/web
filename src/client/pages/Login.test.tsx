@@ -15,10 +15,11 @@ describe("fallback login panel", () => {
         expect(markup).toContain('href="/"');
     });
 
-    it("confirms completed account deletion without treating it as an error", () => {
-        const markup = renderPanel(null, "Your Hanami account was deleted.");
+    it("confirms a scheduled deletion without treating it as an error", () => {
+        const markup = renderPanel(null, "Your data will be deleted in 14 days.");
         expect(markup).toContain('role="status"');
-        expect(markup).toContain("Your Hanami account was deleted.");
+        expect(markup).toContain("Deletion scheduled");
+        expect(markup).toContain("Your data will be deleted in 14 days.");
         expect(markup).not.toContain('role="alert"');
     });
 
