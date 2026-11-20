@@ -269,6 +269,7 @@ async function makeAuth(options: { profiles?: Array<{ userId: string; osuId: str
                 profiles.find((profile) => profile.userId === where.userId) ?? null,
         },
         accountDeletionSchedule: { count: async () => 0 },
+        supporterStatus: { findUnique: async () => null },
     };
     await reconcileOsuGuessrClient(
         {

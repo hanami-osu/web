@@ -23,9 +23,6 @@ export default function Footer() {
                         <img className="size-10 object-contain" src="/hanami-transparent.png" alt="" width="54" height="54" />
                         <span>Hanami</span>
                     </PrefetchLink>
-                    <p className="mt-4 max-w-[35ch] text-[0.84rem] leading-[1.65] text-muted">
-                        osu! tools, games, and your Hanami account.
-                    </p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-8 [&>div]:flex [&>div]:flex-col [&>div]:items-start [&>div]:gap-0">
@@ -45,9 +42,9 @@ export default function Footer() {
                         <a className={footerLinkClass} href={siteConfig.links.community} target="_blank" rel="noreferrer">
                             Community <ArrowUpRight aria-hidden="true" />
                         </a>
-                        <a className={footerLinkClass} href={siteConfig.links.support} target="_blank" rel="noreferrer">
-                            Support us <ArrowUpRight aria-hidden="true" />
-                        </a>
+                        <PrefetchLink className={footerLinkClass} href={routes.supporter} prefetch="intent">
+                            Support us
+                        </PrefetchLink>
                     </div>
                 </div>
             </div>

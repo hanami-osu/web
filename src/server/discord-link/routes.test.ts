@@ -1,8 +1,7 @@
 import { describe, expect, it } from "bun:test";
-import { Elysia } from "elysia";
 
 import { hashToken } from "../security/tokens";
-import { createDiscordLinkRoutes } from "./routes";
+import { createDiscordLinkHandler } from "./routes";
 import type { DiscordLinkTicket, DiscordLinkTicketStore } from "./tickets";
 
 const now = new Date("2026-07-15T12:00:00.000Z");
@@ -18,7 +17,7 @@ describe("Discord bot link ticket endpoint", () => {
         const { app, store } = makeApp();
 
         for (const authorization of [undefined, "Bearer wrong-secret"]) {
-            const response = await app.handle(makeRequest(authorization));
+            const response = await app(makeRequest(authorization));
             expect(response.status).toBe(401);
             expect(response.headers.get("cache-control")).toBe("no-store");
             expect(await response.json()).toEqual({ error: "Unauthorized" });
@@ -28,7 +27,7 @@ describe("Discord bot link ticket endpoint", () => {
 
     it("issues a hashed five-minute ticket and returns only the consume URL", async () => {
         const { app, store } = makeApp();
-        const response = await app.handle(makeRequest("Bearer bot-secret"));
+        const response = await app(makeRequest("Bearer bot-secret"));
 
         expect(response.status).toBe(200);
         expect(response.headers.get("cache-control")).toBe("no-store");
@@ -45,17 +44,36 @@ describe("Discord bot link ticket endpoint", () => {
         });
         expect(JSON.stringify(body)).not.toContain(store.issued[0]!.tokenHash);
     });
+
+    it("rejects malformed or non-JSON ticket bodies without issuing a ticket", async () => {
+        const { app, store } = makeApp();
+        for (const [contentType, body] of [
+            ["application/json", "{"],
+            ["text/plain", JSON.stringify(validBody)],
+        ]) {
+            const response = await app(
+                new Request("http://localhost/api/internal/discord-link-ticket", {
+                    method: "POST",
+                    headers: { Authorization: "Bearer bot-secret", "Content-Type": contentType },
+                    body,
+                }),
+            );
+            expect(response.status).toBe(400);
+            expect(await response.json()).toEqual({ error: "Invalid Discord link request" });
+        }
+        expect(store.issued).toHaveLength(0);
+    });
 });
 
 function makeApp() {
     const store = new RecordingTicketStore();
-    const routes = createDiscordLinkRoutes({
+    const routes = createDiscordLinkHandler({
         ticketStore: store,
         getSecret: () => "bot-secret",
         getBaseUrl: () => "https://hanami.yorunoken.com",
         now: () => now,
     });
-    return { app: new Elysia({ prefix: "/api" }).use(routes), store };
+    return { app: routes, store };
 }
 
 function makeRequest(authorization?: string): Request {

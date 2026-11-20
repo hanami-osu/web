@@ -126,7 +126,9 @@ export default function DataDeletion() {
                     </li>
                     <li>
                         Hanami account: the Hanami Web user, all connected provider records, osu! profile data, sessions, the tokens and
-                        consent records Hanami issued to connected apps, and deletion reauthentication records.
+                        consent records Hanami issued to connected apps, deletion reauthentication records, and your Hanami supporter links,
+                        status, claim codes, and the payment and membership records of your linked supporter accounts. Payments themselves
+                        stay with Buy Me a Coffee or GitHub Sponsors and are not refunded.
                     </li>
                 </ul>
                 <p>

@@ -9,6 +9,7 @@
         "db:generate": "bunx prisma generate --schema prisma/web/schema.prisma && bunx prisma generate --schema prisma/bot/schema.prisma",
         "db:migrate": "bun src/scripts/migrate.ts",
         "db:reconcile-oauth-client": "bun src/scripts/reconcile-osu-guessr-client.ts",
+        "supporter:grant": "bun --env-file=.env src/scripts/grant-supporter.ts",
         "format": "prettier . --write",
         "format:check": "prettier . --check",
         "lint": "eslint .",
@@ -24,9 +25,8 @@
         "better-auth": "1.7.3",
         "clsx": "^2.1.1",
         "dotenv": "^17.4.2",
-        "elysia": "^1.4.28",
         "lucide-react": "^0.536.0",
-        "next": "16.4.3",
+        "next": "16.4.6",
         "react": "19.3.1",
         "react-dom": "19.3.1",
         "tailwind-merge": "^3.3.1"

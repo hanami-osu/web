@@ -41,7 +41,7 @@ export function AccountPageIntro({
 }: {
     eyebrow?: string;
     title: string;
-    description: string;
+    description?: string;
     children?: ReactNode;
     className?: string;
 }) {
@@ -49,7 +49,7 @@ export function AccountPageIntro({
         <header className={cn(profileHeadingClass, className)}>
             {eyebrow && <Eyebrow>{eyebrow}</Eyebrow>}
             <h1>{title}</h1>
-            <p>{description}</p>
+            {description && <p>{description}</p>}
             {children}
         </header>
     );
@@ -63,11 +63,11 @@ export function AccountPanel({ children, className, ...props }: React.ComponentP
     );
 }
 
-export function AccountPanelHeader({ title, description, id }: { title: string; description: string; id?: string }) {
+export function AccountPanelHeader({ title, description, id }: { title: string; description?: string; id?: string }) {
     return (
         <div className={accountPanelHeaderClass}>
             <h2 id={id}>{title}</h2>
-            <p>{description}</p>
+            {description && <p>{description}</p>}
         </div>
     );
 }

@@ -8,6 +8,7 @@ const toc: readonly TocItem[] = [
     { id: "conduct", label: "Responsibilities and prohibited use" },
     { id: "third-parties", label: "Third-party platforms and data" },
     { id: "availability", label: "Availability and unfinished features" },
+    { id: "supporter", label: "Hanami supporter" },
     { id: "content", label: "Reports, feedback, and contributions" },
     { id: "ip", label: "Intellectual property and open source" },
     { id: "termination", label: "Suspension and termination" },
@@ -28,6 +29,7 @@ export default function TermsOfService() {
                 "Discord, osu!, and other providers remain independent services with their own rules.",
                 "Community-run and unfinished features can change, pause, or be discontinued.",
                 "Use only accounts and data you are authorized to control.",
+                "Hanami supporter payments are processed and refunded by Buy Me a Coffee or GitHub Sponsors.",
             ]}
         >
             <LegalSection id="acceptance" title="1. Acceptance">
@@ -118,7 +120,28 @@ export default function TermsOfService() {
                 </p>
             </LegalSection>
 
-            <LegalSection id="content" title="7. Reports, feedback, and contributions">
+            <LegalSection id="supporter" title="7. Hanami supporter">
+                <p>
+                    Hanami supporter is an optional, voluntary way to pay toward running and developing Hanami. Payments are made on Buy Me
+                    a Coffee or GitHub Sponsors, which process them under their own terms. Billing, cancellation, refunds, chargebacks, and
+                    any taxes they collect are handled by that platform, not by Hanami.
+                </p>
+                <p>
+                    Supporter status applies to the Hanami account you link the paying platform account to. An active membership on a linked
+                    account makes you a supporter while the platform reports it as active. One-time payments in US dollars add 10 days of
+                    supporter status per dollar; that time is saved while a membership is active. A refunded payment removes the time it
+                    added. Payments that cannot be matched to a Hanami account cannot be credited; contact the operator if a payment is
+                    missing.
+                </p>
+                <p>
+                    Anyone who has paid keeps the supporter badge after their support ends. Supporter features are offered as they exist at
+                    the time and may be added, changed, or removed; planned features are not promised. Supporter status never changes ranked
+                    play, scores, or leaderboards. Deleting your Hanami account removes your supporter status and does not entitle you to a
+                    refund from Hanami.
+                </p>
+            </LegalSection>
+
+            <LegalSection id="content" title="8. Reports, feedback, and contributions">
                 <p>
                     osu!guessr supports user-submitted catalog reports with a free-text description. You keep any rights you have in the
                     text you submit and grant the operator a non-exclusive, worldwide, royalty-free license to store, review, reproduce, and
@@ -136,7 +159,7 @@ export default function TermsOfService() {
                 </p>
             </LegalSection>
 
-            <LegalSection id="ip" title="8. Intellectual property and open-source software">
+            <LegalSection id="ip" title="9. Intellectual property and open-source software">
                 <p>
                     Yorunoken and the relevant contributors, not “Hanami Bot” as a software object, hold rights in original branding,
                     artwork, hosted-service presentation, and code to the extent those rights exist. Hanami does not claim that a name or
@@ -153,7 +176,7 @@ export default function TermsOfService() {
                 </p>
             </LegalSection>
 
-            <LegalSection id="termination" title="9. Suspension and termination">
+            <LegalSection id="termination" title="10. Suspension and termination">
                 <p>
                     The operator may restrict or suspend access when reasonably necessary to prevent abuse, protect users or infrastructure,
                     comply with law or provider requirements, investigate an incident, or enforce these terms. Where practical, the operator
@@ -165,7 +188,7 @@ export default function TermsOfService() {
                 </p>
             </LegalSection>
 
-            <LegalSection id="disclaimers" title="10. Disclaimers">
+            <LegalSection id="disclaimers" title="11. Disclaimers">
                 <p>
                     To the extent permitted by applicable law, the hosted services are provided “as available” and without implied
                     warranties that can legally be excluded. The operator does not promise uninterrupted operation, error-free results,
@@ -174,7 +197,7 @@ export default function TermsOfService() {
                 </p>
             </LegalSection>
 
-            <LegalSection id="liability" title="11. Limitation of liability">
+            <LegalSection id="liability" title="12. Limitation of liability">
                 <p>
                     To the extent permitted by applicable law, the operator will not be liable for indirect or consequential losses arising
                     from use of or inability to use the services, loss of data, provider outages, or unauthorized account use. Nothing in
@@ -183,7 +206,7 @@ export default function TermsOfService() {
                 </p>
             </LegalSection>
 
-            <LegalSection id="law" title="12. Governing law and disputes">
+            <LegalSection id="law" title="13. Governing law and disputes">
                 <p>
                     These terms are governed by the laws of Türkiye. Before filing a claim, please contact{" "}
                     <a href={`mailto:${legalContacts.legal}`}>{legalContacts.legal}</a> so the parties can try to resolve the issue
@@ -192,7 +215,7 @@ export default function TermsOfService() {
                 </p>
             </LegalSection>
 
-            <LegalSection id="changes" title="13. Changes and contact">
+            <LegalSection id="changes" title="14. Changes and contact">
                 <p>
                     Material changes will be posted with a new effective date and, where appropriate, announced through the website or
                     community server before they take effect. Security- or law-driven changes may take effect sooner. Continued use after

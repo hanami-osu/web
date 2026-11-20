@@ -1,9 +1,8 @@
 import { Github } from "lucide-react";
 
-import { ActionLink, SectionIntro, TextLink } from "@/components/marketing";
+import { ActionLink, SectionIntro } from "@/components/marketing";
 import {
     HeroActions,
-    ProductFootnote,
     ProductPage,
     ProductSection,
     ProductSplit,
@@ -65,11 +64,7 @@ export default function OsuGuessr() {
                 <div className={cn(siteContainerClass, heroMinHeightClass, "relative z-20 flex items-center py-8 md:py-10")}>
                     <div className={cn(productHeroCopyClass, "max-w-175")}>
                         <h1 className={productTitleClass}>{product.name}</h1>
-                        <p className={productBodyClass}>
-                            Sign in with osu!, choose a mode, and guess from artwork, audio, or a skin screenshot, or pick which of two
-                            plays is worth more pp. Play solo or in multiplayer lobbies, and compare your scores and streaks on the
-                            leaderboards.
-                        </p>
+                        <p className={productBodyClass}>Guess osu! beatmaps and skins, solo or with friends.</p>
                         <HeroActions>
                             <ActionLink href={product.links.primary} external>
                                 Play osu!guessr
@@ -78,9 +73,6 @@ export default function OsuGuessr() {
                                 <Github aria-hidden="true" /> Source
                             </ActionLink>
                         </HeroActions>
-                        <p className="mt-[1.2rem] text-[0.7rem] text-muted">
-                            Background artwork is sourced with the game’s beatmap catalog.
-                        </p>
                     </div>
                 </div>
             </section>
@@ -112,10 +104,7 @@ export default function OsuGuessr() {
             <ProductSplit>
                 <div>
                     <h2 className={sectionHeadingClass}>Classic, Survival, and Death</h2>
-                    <p className={sectionBodyClass}>
-                        Classic ends after 15 rounds. Survival continues until all 3 lives are lost, and Death ends at the first mistake.
-                        Ranked runs appear in your history and earn pp for the leaderboards.
-                    </p>
+                    <p className={sectionBodyClass}>Ranked runs earn pp for the leaderboards.</p>
                 </div>
                 <dl className="grid gap-7 [&_dd]:text-[0.88rem] [&_dd]:leading-[1.55] [&_dd]:text-muted [&_dt]:text-[0.78rem] [&_dt]:font-medium [&_dt]:text-accent-soft [&>div]:grid [&>div]:grid-cols-[5.5rem_1fr] [&>div]:gap-4 min-xs:[&>div]:grid-cols-[7rem_1fr]">
                     <div>
@@ -124,27 +113,14 @@ export default function OsuGuessr() {
                     </div>
                     <div>
                         <dt>Survival</dt>
-                        <dd>3 lives; a wrong guess, skip, or timeout costs one</dd>
+                        <dd>3 lives. A wrong guess, skip, or timeout costs one.</dd>
                     </div>
                     <div>
                         <dt>Death</dt>
-                        <dd>1 life; the first mistake ends the run</dd>
-                    </div>
-                    <div>
-                        <dt>Account</dt>
-                        <dd>osu! sign-in is required to start a game</dd>
-                    </div>
-                    <div>
-                        <dt>Reporting</dt>
-                        <dd>Signed-in players can report catalog problems</dd>
+                        <dd>One mistake ends the run</dd>
                     </div>
                 </dl>
             </ProductSplit>
-
-            <ProductFootnote>
-                <p>osu!guessr is a separate hosted service with its own authentication, browser storage, and analytics behavior.</p>
-                <TextLink href="/legal/privacy">Read the privacy policy</TextLink>
-            </ProductFootnote>
         </ProductPage>
     );
 }

@@ -4,19 +4,23 @@ export type OsuGuessrDeletionClient = (osuId: string, action: OsuGuessrDeletionA
 
 const REQUEST_TIMEOUT_MS = 10_000;
 
-interface OsuGuessrDeletionConfig {
+export interface OsuGuessrDeletionConfig {
     url: string;
     secret: string;
 }
 
 /** Read lazily so the Docker build, which has no osu!guessr settings, does not fail at import time. */
-export function getOsuGuessrDeletionConfig(environment: NodeJS.ProcessEnv = process.env): OsuGuessrDeletionConfig {
+export function getOsuGuessrInternalConfig(path: string, environment: NodeJS.ProcessEnv = process.env): OsuGuessrDeletionConfig {
     const baseUrl = environment.OSU_GUESSR_INTERNAL_URL;
     const secret = environment.OSU_GUESSR_INTERNAL_SECRET;
     if (!baseUrl) throw new Error("OSU_GUESSR_INTERNAL_URL environment variable is not set.");
     if (!secret) throw new Error("OSU_GUESSR_INTERNAL_SECRET environment variable is not set.");
     if (Buffer.byteLength(secret, "utf8") < 32) throw new Error("OSU_GUESSR_INTERNAL_SECRET must contain at least 32 bytes.");
-    return { url: new URL("/api/internal/account-deletion", baseUrl).toString(), secret };
+    return { url: new URL(path, baseUrl).toString(), secret };
+}
+
+export function getOsuGuessrDeletionConfig(environment: NodeJS.ProcessEnv = process.env): OsuGuessrDeletionConfig {
+    return getOsuGuessrInternalConfig("/api/internal/account-deletion", environment);
 }
 
 export function createOsuGuessrDeletionClient(

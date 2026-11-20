@@ -97,6 +97,29 @@ export default function PrivacyPolicy() {
                     </li>
                 </ul>
 
+                <h3>Hanami supporter</h3>
+                <ul>
+                    <li>
+                        When you link GitHub to receive supporter status, Hanami stores that account’s ID, its login, and the link date. The
+                        OAuth access token is used once to read your identity and GitHub sponsorship status, including a one-time payment,
+                        and is not stored. Buy Me a Coffee is linked with a one-time claim code that you paste into your support note;
+                        Hanami stores a SHA-256 hash of the code with its creation, expiry, and use dates, and then the Buy Me a Coffee
+                        supporter ID and name.
+                    </li>
+                    <li>
+                        GitHub and Buy Me a Coffee send signed webhooks when a membership changes or a one-time payment is made. Hanami
+                        stores the platform supporter ID, whether the membership is active, and for one-time payments the platform’s payment
+                        ID, the amount in US dollars, the supporter days it grants, and the payment and refund dates. Email addresses and
+                        payment details in those webhooks are not stored. Payments made before an account is linked are kept under the
+                        platform supporter ID until it is linked.
+                    </li>
+                    <li>
+                        For each account, Hanami stores whether it has the supporter badge and since when, the remaining donated time, and
+                        whether a linked membership is active. Apps you sign in to with the <code>supporter</code> scope, such as
+                        osu!guessr, receive the badge, active status, and end date of donated time.
+                    </li>
+                </ul>
+
                 <h3>Scheduled data deletion</h3>
                 <ul>
                     <li>
@@ -124,9 +147,10 @@ export default function PrivacyPolicy() {
                         Permanent deletion removes, for the osu!guessr scope, the osu!guessr user record, games and rounds, pp and
                         achievements, badges, API keys, reports, and per-answer contributions; for the Bot scope, the Hanami Bot user row
                         and preferences; and for the account scope, the Hanami Web user, all connected provider records, osu! profile data,
-                        sessions, and the tokens and consent records Hanami issued to connected apps. Challenges the user created are kept
-                        with the creator removed, and anonymous aggregate content statistics are kept. Cached osu! score and beatmap records
-                        in the Bot database are keyed to osu! IDs rather than to the account and are not removed.
+                        supporter links, status, claim codes, and the membership and payment records of linked supporter accounts, sessions,
+                        and the tokens and consent records Hanami issued to connected apps. Challenges the user created are kept with the
+                        creator removed, and anonymous aggregate content statistics are kept. Cached osu! score and beatmap records in the
+                        Bot database are keyed to osu! IDs rather than to the account and are not removed.
                     </li>
                 </ul>
 
@@ -228,6 +252,10 @@ export default function PrivacyPolicy() {
                             <td>Performance of a contract or steps requested by the user.</td>
                         </tr>
                         <tr>
+                            <td>Link supporter accounts and track memberships and one-time payments to grant supporter status.</td>
+                            <td>Performance of a contract or steps requested by the user.</td>
+                        </tr>
+                        <tr>
                             <td>Prevent abuse, secure OAuth flows, rate-limit actions, diagnose failures, and maintain availability.</td>
                             <td>Legitimate interests in operating and protecting the services.</td>
                         </tr>
@@ -252,8 +280,10 @@ export default function PrivacyPolicy() {
             <LegalSection id="sharing" title="5. Third parties and international processing">
                 <p>
                     Data is transmitted as needed to Discord for sign-in, bot operation, webhooks, and error reporting; to osu! for sign-in
-                    and API lookups; and to Cloudflare as the public sites’ proxy and network provider. Hanami-controlled application,
-                    database, Redis, and self-hosted Umami infrastructure is hosted in Germany.
+                    and API lookups; to GitHub when you link it for supporter status; and to Cloudflare as the public sites’ proxy and
+                    network provider. GitHub and Buy Me a Coffee process supporter payments under their own terms and send Hanami the
+                    webhooks described above. Hanami-controlled application, database, Redis, and self-hosted Umami infrastructure is hosted
+                    in Germany.
                 </p>
                 <p>
                     The operator manages the services from Türkiye while Hanami-controlled production data is processed on infrastructure in
@@ -284,6 +314,12 @@ export default function PrivacyPolicy() {
                     <li>
                         Hanami web’s default Better Auth session lifetime is approximately seven days. Database session and OAuth
                         verification records include expiry dates.
+                    </li>
+                    <li>
+                        Supporter claim codes expire after seven days and supporter link requests after ten minutes. Supporter links,
+                        status, and credited payment records are kept while the Hanami account exists; unlinking a platform keeps the time
+                        already credited. Payments and memberships from platform accounts that were never linked are kept so they can be
+                        credited if the account is linked later; ask the privacy contact to have them removed.
                     </li>
                     <li>
                         Bot file logging keeps at most 30 <code>.log</code> files in the configured directory and removes older named files

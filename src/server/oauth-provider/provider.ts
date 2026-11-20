@@ -1,12 +1,19 @@
 import { oauthProvider } from "@better-auth/oauth-provider";
 
-import { buildOsuClaims, osuClaimNames, type OsuClaimsDatabase } from "./claims";
+import {
+    buildOsuClaims,
+    buildSupporterClaims,
+    osuClaimNames,
+    supporterClaimNames,
+    type OsuClaimsDatabase,
+    type SupporterClaimsDatabase,
+} from "./claims";
 
 const coreClaimNames = ["sub", "iss", "aud", "exp", "iat", "sid", "scope", "azp"] as const;
 export const osuOAuthContinuationPath = "/oauth/continue/osu";
 export const oauthConsentPath = "/oauth/consent";
 
-export interface OAuthProviderDatabase extends OsuClaimsDatabase {
+export interface OAuthProviderDatabase extends OsuClaimsDatabase, SupporterClaimsDatabase {
     accountDeletionSchedule: {
         count(args: { where: { userId: string } }): Promise<number>;
     };
@@ -15,13 +22,13 @@ export interface OAuthProviderDatabase extends OsuClaimsDatabase {
 export function createHanamiOAuthProviderPlugin(database: OAuthProviderDatabase) {
     const customClaims = async ({ user, scopes }: { user?: { id: string } | null; scopes: readonly string[] }) => {
         if (!user) return {};
-        const claims = await buildOsuClaims(user.id, scopes, database);
+        const claims: Record<string, string | boolean> = await buildOsuClaims(user.id, scopes, database);
         delete claims.sub;
-        return claims;
+        return { ...claims, ...(await buildSupporterClaims(user.id, scopes, database)) };
     };
 
     return oauthProvider({
-        scopes: ["openid", "osu", "offline_access"],
+        scopes: ["openid", "osu", "supporter", "offline_access"],
         grantTypes: ["authorization_code", "refresh_token"],
         loginPage: "/login",
         consentPage: oauthConsentPath,
@@ -43,7 +50,7 @@ export function createHanamiOAuthProviderPlugin(database: OAuthProviderDatabase)
         allowUnauthenticatedClientRegistration: false,
         refreshTokenReuseInterval: 0,
         advertisedMetadata: {
-            claims_supported: [...coreClaimNames, ...osuClaimNames],
+            claims_supported: [...coreClaimNames, ...osuClaimNames, ...supporterClaimNames],
         },
         customAccessTokenClaims: customClaims,
         customIdTokenClaims: customClaims,

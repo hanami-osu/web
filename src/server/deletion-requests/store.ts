@@ -1,11 +1,20 @@
 import type { Prisma, PrismaClient } from "../../generated/prisma/web/client";
 
 import { safelyEqualHashes } from "../security/tokens";
+import { deleteSupporterData } from "../supporter/store";
 import { DELETION_GRACE_PERIOD_MS, REAUTHENTICATION_WINDOW_MS, type DeletionScopes } from "./domain";
 import type { OsuGuessrDeletionClient } from "./osu-guessr";
 
+const LINKED_DELETION_TRANSACTION_TIMEOUT_MS = 30_000;
+
 export type AccountDeletionFailureCode =
-    "already_scheduled" | "challenge_invalid" | "challenge_stale" | "not_scheduled" | "scope_unavailable" | "service_unavailable";
+    | "already_scheduled"
+    | "challenge_invalid"
+    | "challenge_stale"
+    | "not_scheduled"
+    | "purge_started"
+    | "scope_unavailable"
+    | "service_unavailable";
 
 export class AccountDeletionStoreError extends Error {
     constructor(public readonly code: AccountDeletionFailureCode) {
@@ -158,11 +167,26 @@ export class PrismaDeletionRequestStore implements AccountDeletionStore {
     async cancelDeletion(userId: string): Promise<void> {
         const schedule = await this.prisma.accountDeletionSchedule.findUnique({ where: { userId } });
         if (!schedule) throw new AccountDeletionStoreError("not_scheduled");
+        if (schedule.lastAttemptAt) throw new AccountDeletionStoreError("purge_started");
 
-        await this.restoreLinkedData(userId, toScopes(schedule), schedule.osuId).catch(() => {
-            throw new AccountDeletionStoreError("service_unavailable");
-        });
-        await this.prisma.accountDeletionSchedule.deleteMany({ where: { userId } });
+        const cancelled = await this.prisma.$transaction(
+            async (transaction) => {
+                // Claim cancellation before touching linked data. A failed restore rolls the deletion back.
+                const removed = await transaction.accountDeletionSchedule.deleteMany({ where: { id: schedule.id, lastAttemptAt: null } });
+                if (removed.count === 0) return false;
+
+                await this.restoreLinkedData(userId, toScopes(schedule), schedule.osuId).catch(() => {
+                    throw new AccountDeletionStoreError("service_unavailable");
+                });
+                return true;
+            },
+            { timeout: LINKED_DELETION_TRANSACTION_TIMEOUT_MS },
+        );
+
+        if (!cancelled) {
+            const stillScheduled = await this.prisma.accountDeletionSchedule.count({ where: { id: schedule.id } });
+            throw new AccountDeletionStoreError(stillScheduled ? "purge_started" : "not_scheduled");
+        }
     }
 
     async getDeletionStatus(userId: string): Promise<DeletionStatus | null> {
@@ -180,29 +204,48 @@ export class PrismaDeletionRequestStore implements AccountDeletionStore {
 
         const result: PurgeResult = { purged: 0, failed: 0 };
         for (const schedule of due) {
-            let stage = "osu_guessr";
+            let stage = "web";
             try {
-                if (schedule.deleteOsuGuessr && schedule.osuId) await this.services.osuGuessr(schedule.osuId, "purge");
-                stage = "bot";
-                if (schedule.deleteBot && schedule.discordId) await this.services.bot.deleteUser(schedule.discordId);
-                stage = "web";
-                await this.prisma.$transaction(async (transaction) => {
-                    if (schedule.deleteAccount) {
-                        // Refresh tokens block user deletion (ON DELETE RESTRICT); access tokens and consents would otherwise
-                        // survive with their user link cleared. Deleting the user cascades to the schedule row.
-                        await transaction.oauthAccessToken.deleteMany({ where: { userId: schedule.userId } });
-                        await transaction.oauthRefreshToken.deleteMany({ where: { userId: schedule.userId } });
-                        await transaction.oauthConsent.deleteMany({ where: { userId: schedule.userId } });
-                        await transaction.user.deleteMany({ where: { id: schedule.userId } });
-                    } else {
-                        await transaction.accountDeletionSchedule.deleteMany({ where: { id: schedule.id } });
-                    }
+                // Commit this before any permanent deletion so a partial purge or crash cannot reopen cancellation.
+                const claimed = await this.prisma.accountDeletionSchedule.updateMany({
+                    where: { id: schedule.id },
+                    data: { lastAttemptAt: now },
                 });
-                result.purged += 1;
+                if (claimed.count === 0) continue;
+
+                const purged = await this.prisma.$transaction(
+                    async (transaction) => {
+                        // Only one worker may run the linked purge for this schedule at a time.
+                        const locked = await transaction.$queryRaw<{ id: string }[]>`
+                            SELECT id FROM accountDeletionSchedule WHERE id = ${schedule.id} FOR UPDATE
+                        `;
+                        if (locked.length === 0) return false;
+
+                        stage = "osu_guessr";
+                        if (schedule.deleteOsuGuessr && schedule.osuId) await this.services.osuGuessr(schedule.osuId, "purge");
+                        stage = "bot";
+                        if (schedule.deleteBot && schedule.discordId) await this.services.bot.deleteUser(schedule.discordId);
+                        stage = "web";
+                        if (schedule.deleteAccount) {
+                            // Refresh tokens block user deletion (ON DELETE RESTRICT); access tokens and consents would otherwise
+                            // survive with their user link cleared. Deleting the user cascades to the schedule row.
+                            await transaction.oauthAccessToken.deleteMany({ where: { userId: schedule.userId } });
+                            await transaction.oauthRefreshToken.deleteMany({ where: { userId: schedule.userId } });
+                            await transaction.oauthConsent.deleteMany({ where: { userId: schedule.userId } });
+                            await deleteSupporterData(transaction, schedule.userId);
+                            await transaction.user.deleteMany({ where: { id: schedule.userId } });
+                        } else {
+                            await transaction.accountDeletionSchedule.deleteMany({ where: { id: schedule.id } });
+                        }
+                        return true;
+                    },
+                    { timeout: LINKED_DELETION_TRANSACTION_TIMEOUT_MS },
+                );
+                if (purged) result.purged += 1;
             } catch {
                 result.failed += 1;
                 await this.prisma.accountDeletionSchedule
-                    .updateMany({ where: { id: schedule.id }, data: { lastAttemptAt: now, lastError: `${stage}_failed` } })
+                    .updateMany({ where: { id: schedule.id, lastAttemptAt: now }, data: { lastError: `${stage}_failed` } })
                     .catch(() => undefined);
             }
         }

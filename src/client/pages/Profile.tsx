@@ -13,6 +13,7 @@ import {
     type LoginMethod,
     type ProfileAction,
 } from "@/components/account/profile-sections";
+import { SupporterSection } from "@/components/account/supporter-section";
 import { formMessageClass } from "@/components/ui/action-styles";
 import { cn } from "@/lib/utils";
 import type { BotSettings } from "@/lib/bot-settings";
@@ -144,11 +145,7 @@ export default function Profile() {
     return (
         <AccountPage>
             <AccountLayout className={cn(profileLayoutClass, "max-w-280")}>
-                <AccountPageIntro
-                    eyebrow="Hanami account"
-                    title={displayName}
-                    description="Manage your linked accounts and bot preferences."
-                />
+                <AccountPageIntro eyebrow="Hanami account" title={displayName} />
 
                 {error && (
                     <p className={cn(formMessageClass, "text-danger")} role="alert">
@@ -166,6 +163,8 @@ export default function Profile() {
                     onUnlink={handleUnlinkProvider}
                 />
 
+                <SupporterSection />
+
                 <div className={cn("mt-8 grid items-start gap-6", discordLinked && "lg:grid-cols-[minmax(0,1fr)_17rem]")}>
                     {discordLinked && (
                         <BotPreferencesSection
@@ -178,7 +177,7 @@ export default function Profile() {
                         />
                     )}
 
-                    <AccountPrivacyAside compact={discordLinked} />
+                    <AccountPrivacyAside />
                 </div>
             </AccountLayout>
         </AccountPage>

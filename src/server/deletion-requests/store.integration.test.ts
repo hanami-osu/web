@@ -116,13 +116,45 @@ describeDatabase("Prisma scheduled account deletion store", () => {
         expect(await store.getDeletionStatus("user-1")).toBeNull();
     });
 
-    it("restores linked data when cancelled", async () => {
-        await scheduleFor({ account: false, bot: true, osuGuessr: true });
+    it("keeps the schedule after a failed restore and restores linked data when cancellation is retried", async () => {
+        const scheduled = await scheduleFor({ account: false, bot: true, osuGuessr: true });
+        services.failOn = "osu:restore";
+        await expect(store.cancelDeletion("user-1")).rejects.toThrow("service_unavailable");
+        expect(await store.getDeletionStatus("user-1")).toEqual(scheduled);
+
+        services.failOn = null;
         services.calls = [];
         await store.cancelDeletion("user-1");
         expect(services.calls).toEqual(["osu:restore:osu-1", "bot:restore:user-1"]);
         expect(await store.getDeletionStatus("user-1")).toBeNull();
         await expect(store.cancelDeletion("user-1")).rejects.toThrow("not_scheduled");
+    });
+
+    it("refuses cancellation while a linked purge is in progress", async () => {
+        await scheduleFor({ account: false, bot: false, osuGuessr: true });
+        services.calls = [];
+        const purgeStarted = Promise.withResolvers<void>();
+        const releasePurge = Promise.withResolvers<void>();
+        const osuGuessr = services.osuGuessr;
+        services.osuGuessr = async (osuId, action) => {
+            await osuGuessr(osuId, action);
+            if (action === "purge") {
+                purgeStarted.resolve();
+                await releasePurge.promise;
+            }
+        };
+
+        const purge = store.purgeDue(afterGrace);
+        try {
+            await Promise.race([purgeStarted.promise, purge]);
+            await expect(store.cancelDeletion("user-1")).rejects.toThrow("purge_started");
+        } finally {
+            releasePurge.resolve();
+            await purge;
+        }
+
+        expect(await purge).toEqual({ purged: 1, failed: 0 });
+        expect(services.calls).toEqual(["osu:purge:osu-1"]);
     });
 
     it("waits for the grace period, then purges every selected service", async () => {
@@ -148,15 +180,18 @@ describeDatabase("Prisma scheduled account deletion store", () => {
         expect(await prisma.accountDeletionSchedule.count({ where: { userId: "user-1" } })).toBe(0);
     });
 
-    it("records a failed purge and retries it on the next run", async () => {
+    it("records a partial purge, refuses cancellation, and retries on the next run", async () => {
         if (!prisma) throw new Error("Database test store is unavailable");
         await scheduleFor({ account: true, bot: true, osuGuessr: true });
-        services.failOn = "osu:purge";
+        services.calls = [];
+        services.failOn = "bot:delete";
 
         expect(await store.purgeDue(afterGrace)).toEqual({ purged: 0, failed: 1 });
         const failed = await prisma.accountDeletionSchedule.findUnique({ where: { userId: "user-1" } });
-        expect(failed?.lastError).toBe("osu_guessr_failed");
+        expect(failed?.lastError).toBe("bot_failed");
         expect(await prisma.user.findUnique({ where: { id: "user-1" } })).not.toBeNull();
+        await expect(store.cancelDeletion("user-1")).rejects.toThrow("purge_started");
+        expect(services.calls).toEqual(["osu:purge:osu-1", "bot:delete:discord-1"]);
 
         services.failOn = null;
         expect(await store.purgeDue(afterGrace)).toEqual({ purged: 1, failed: 0 });

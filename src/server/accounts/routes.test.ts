@@ -1,13 +1,12 @@
 import { describe, expect, it, mock } from "bun:test";
-import { Elysia } from "elysia";
 
-import { createAccountRoutes, type AccountRouteDependencies } from "./routes";
+import { createAccountHandlers, type AccountRouteDependencies } from "./routes";
 
 describe("canonical account routes", () => {
     it("lists provider-owned login methods without exposing provider tokens", async () => {
-        const app = new Elysia({ prefix: "/api" }).use(createAccountRoutes(makeDependencies()));
+        const app = createAccountHandlers(makeDependencies());
 
-        const response = await app.handle(new Request("http://localhost/api/account/providers"));
+        const response = await app.listProviders(new Request("http://localhost/api/account/providers"));
 
         expect(response.status).toBe(200);
         expect(await response.json()).toEqual({
@@ -20,13 +19,14 @@ describe("canonical account routes", () => {
 
     it("starts explicit provider linking through the configured auth flow", async () => {
         const dependencies = makeDependencies();
-        const app = new Elysia({ prefix: "/api" }).use(createAccountRoutes(dependencies));
+        const app = createAccountHandlers(dependencies);
 
-        const response = await app.handle(
+        const response = await app.linkProvider(
             new Request("http://localhost:3000/api/account/providers/osu/link", {
                 method: "POST",
                 headers: { Origin: "http://localhost:3000" },
             }),
+            { params: Promise.resolve({ provider: "osu" }) },
         );
 
         expect(response.status).toBe(200);
@@ -36,11 +36,11 @@ describe("canonical account routes", () => {
 
     it("starts the osu OAuth continuation link only at its fixed same-origin callback", async () => {
         const dependencies = makeDependencies();
-        const app = new Elysia({ prefix: "/api" }).use(createAccountRoutes(dependencies));
+        const app = createAccountHandlers(dependencies);
         const oauthQuery =
             "scope=openid+osu&client_id=guessr-client&ba_iat=1730000000000&exp=1730000600&ba_param=ba_iat&ba_param=ba_param&ba_param=client_id&ba_param=exp&ba_param=scope&sig=signature";
 
-        const response = await app.handle(
+        const response = await app.continueOsuLink(
             new Request("http://localhost:3000/api/account/providers/osu/link/continuation", {
                 method: "POST",
                 headers: { Origin: "http://localhost:3000", "Content-Type": "application/json" },
@@ -62,9 +62,9 @@ describe("canonical account routes", () => {
 
     it("rejects malformed continuation state before starting account linking", async () => {
         const dependencies = makeDependencies();
-        const app = new Elysia({ prefix: "/api" }).use(createAccountRoutes(dependencies));
+        const app = createAccountHandlers(dependencies);
 
-        const response = await app.handle(
+        const response = await app.continueOsuLink(
             new Request("http://localhost:3000/api/account/providers/osu/link/continuation", {
                 method: "POST",
                 headers: { Origin: "http://localhost:3000", "Content-Type": "application/json" },
@@ -82,11 +82,11 @@ describe("canonical account routes", () => {
         dependencies.beginLink = mock(async () => {
             throw Object.assign(new Error("Bad Request"), { body: { error: "invalid_signature" } });
         });
-        const app = new Elysia({ prefix: "/api" }).use(createAccountRoutes(dependencies));
+        const app = createAccountHandlers(dependencies);
         const oauthQuery =
             "scope=openid+osu&client_id=guessr-client&ba_iat=1730000000000&exp=1730000600&ba_param=ba_iat&ba_param=ba_param&ba_param=client_id&ba_param=exp&ba_param=scope&sig=signature";
 
-        const response = await app.handle(
+        const response = await app.continueOsuLink(
             new Request("http://localhost:3000/api/account/providers/osu/link/continuation", {
                 method: "POST",
                 headers: { Origin: "http://localhost:3000", "Content-Type": "application/json" },
@@ -104,13 +104,14 @@ describe("canonical account routes", () => {
         headers.append("Set-Cookie", "better-auth.state=one; Path=/; HttpOnly");
         headers.append("Set-Cookie", "better-auth.pkce=two; Path=/; HttpOnly");
         dependencies.beginLink = mock(async () => ({ url: "https://osu.ppy.sh/oauth/authorize?state=link", headers }));
-        const app = new Elysia({ prefix: "/api" }).use(createAccountRoutes(dependencies));
+        const app = createAccountHandlers(dependencies);
 
-        const response = await app.handle(
+        const response = await app.linkProvider(
             new Request("http://localhost:3000/api/account/providers/osu/link", {
                 method: "POST",
                 headers: { Origin: "http://localhost:3000" },
             }),
+            { params: Promise.resolve({ provider: "osu" }) },
         );
 
         expect(response.status).toBe(200);
@@ -124,13 +125,14 @@ describe("canonical account routes", () => {
     it("refuses to unlink the final sign-in method", async () => {
         const dependencies = makeDependencies();
         dependencies.listLoginMethods = async () => [{ provider: "osu", providerUserId: "24680" }];
-        const app = new Elysia({ prefix: "/api" }).use(createAccountRoutes(dependencies));
+        const app = createAccountHandlers(dependencies);
 
-        const response = await app.handle(
+        const response = await app.unlinkProvider(
             new Request("http://localhost:3000/api/account/providers/osu", {
                 method: "DELETE",
                 headers: { Origin: "http://localhost:3000" },
             }),
+            { params: Promise.resolve({ provider: "osu" }) },
         );
 
         expect(response.status).toBe(409);
@@ -146,13 +148,14 @@ describe("canonical account routes", () => {
         dependencies.unlink = mock(async () => {
             events.push("web");
         });
-        const app = new Elysia({ prefix: "/api" }).use(createAccountRoutes(dependencies));
+        const app = createAccountHandlers(dependencies);
 
-        const response = await app.handle(
+        const response = await app.unlinkProvider(
             new Request("http://localhost:3000/api/account/providers/osu", {
                 method: "DELETE",
                 headers: { Origin: "http://localhost:3000" },
             }),
+            { params: Promise.resolve({ provider: "osu" }) },
         );
 
         expect(response.status).toBe(200);
@@ -169,13 +172,14 @@ describe("canonical account routes", () => {
         dependencies.unlink = mock(async () => {
             throw new Error("Web database unavailable");
         });
-        const app = new Elysia({ prefix: "/api" }).use(createAccountRoutes(dependencies));
+        const app = createAccountHandlers(dependencies);
 
-        const response = await app.handle(
+        const response = await app.unlinkProvider(
             new Request("http://localhost:3000/api/account/providers/osu", {
                 method: "DELETE",
                 headers: { Origin: "http://localhost:3000" },
             }),
+            { params: Promise.resolve({ provider: "osu" }) },
         );
 
         expect(response.status).toBe(500);
@@ -188,13 +192,14 @@ describe("canonical account routes", () => {
             throw new Error("Bot database unavailable");
         });
         dependencies.unlink = mock(async () => undefined);
-        const app = new Elysia({ prefix: "/api" }).use(createAccountRoutes(dependencies));
+        const app = createAccountHandlers(dependencies);
 
-        const response = await app.handle(
+        const response = await app.unlinkProvider(
             new Request("http://localhost:3000/api/account/providers/osu", {
                 method: "DELETE",
                 headers: { Origin: "http://localhost:3000" },
             }),
+            { params: Promise.resolve({ provider: "osu" }) },
         );
 
         expect(response.status).toBe(500);

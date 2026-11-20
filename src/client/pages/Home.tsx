@@ -1,3 +1,4 @@
+import { routes } from "@/client/routes/paths";
 import Footer from "@/components/footer";
 import Header from "@/components/header";
 import {
@@ -43,9 +44,7 @@ export default function Home() {
                     >
                         <div className="relative z-10 max-w-170">
                             <h1 className={displayClass}>Hanami</h1>
-                            <p className="mt-4 max-w-[48ch] text-sm leading-relaxed text-muted sm:text-base">
-                                osu! projects by yorunoken: a Discord bot, a beatmap guessing game, and a desktop app in development.
-                            </p>
+                            <p className="mt-4 max-w-[48ch] text-sm leading-relaxed text-muted sm:text-base">osu! projects by yorunoken.</p>
                             <div className="mt-6 flex flex-wrap gap-3 max-xs:flex-col">
                                 <ActionLink href={siteConfig.links.community} external>
                                     Discord server
@@ -104,9 +103,6 @@ export default function Home() {
                     <div className="grid overflow-hidden rounded-lg border border-border bg-surface/35 md:grid-cols-2">
                         <div className="border-b border-border p-5 md:border-r md:border-b-0">
                             <h2 className={sectionHeadingClass}>Open source</h2>
-                            <p className="mt-2 max-w-[52ch] text-sm leading-relaxed text-muted">
-                                Read the code, report a bug, or contribute to the projects on GitHub.
-                            </p>
                             <TextLink className="mt-2" href={siteConfig.links.organization} external>
                                 Browse repositories
                             </TextLink>
@@ -114,10 +110,10 @@ export default function Home() {
                         <div className="p-5" id="support">
                             <h2 className={sectionHeadingClass}>Support Hanami</h2>
                             <p className="mt-2 max-w-[52ch] text-sm leading-relaxed text-muted">
-                                GitHub Sponsors contributions cover hosting and maintenance.
+                                $3 a month or a one-time amount covers hosting and development, and you keep the supporter badge.
                             </p>
-                            <TextLink className="mt-2" href={siteConfig.links.support} external>
-                                Sponsor on GitHub
+                            <TextLink className="mt-2" href={routes.supporter}>
+                                Become a supporter
                             </TextLink>
                         </div>
                     </div>

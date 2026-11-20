@@ -217,11 +217,7 @@ export default function AccountPrivacy() {
     return (
         <AccountPage>
             <AccountLayout className="max-w-280 py-[clamp(3rem,6vw,5rem)]">
-                <AccountPageIntro
-                    eyebrow="Hanami account"
-                    title="Account privacy"
-                    description="View your account data, request help, or choose what to delete."
-                >
+                <AccountPageIntro eyebrow="Hanami account" title="Account privacy">
                     <nav
                         className="mt-6 flex flex-wrap gap-x-6 gap-y-[0.65rem] text-[0.82rem] [&_a]:text-muted [&_a]:underline [&_a]:decoration-white/40 [&_a]:underline-offset-[0.25em]"
                         aria-label="Account sections"
@@ -246,11 +242,7 @@ export default function AccountPrivacy() {
 
                 <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(18rem,0.85fr)] lg:grid-rows-[auto_1fr]">
                     <AccountPanel className="lg:row-span-2 lg:grid lg:grid-rows-subgrid lg:gap-0" aria-labelledby="identity-title">
-                        <AccountPanelHeader
-                            id="identity-title"
-                            title="Account data"
-                            description="The Hanami account and connected osu! data affected by deletion."
-                        />
+                        <AccountPanelHeader id="identity-title" title="Account data" />
                         <dl className="grid gap-8 px-[clamp(1.35rem,3vw,2rem)] py-5 [&_dd]:mt-2 [&_dd]:text-base [&_dd]:font-bold [&_dd]:text-white [&_dt]:text-[0.78rem] [&_dt]:font-medium [&_dt]:text-quiet [&_small]:mt-1 [&_small]:block [&_small]:text-[0.78rem] [&_small]:leading-[1.55] [&_small]:text-muted">
                             <div>
                                 <dt>Current Hanami account</dt>

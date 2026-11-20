@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 
 import { DELETION_GRACE_PERIOD_MS, hashChallengeToken, type DeletionScopes } from "./domain";
-import { createAccountDeletionRoutes } from "./routes";
+import { createAccountDeletionHandlers } from "./routes";
 import { AccountDeletionStoreError, type AccountDeletionStore, type DeletionStatus } from "./store";
 
 const now = new Date("2026-07-14T18:00:00.000Z");
@@ -16,7 +16,7 @@ describe("scheduled account deletion routes", () => {
 
     it("requires reauthentication for a stale session", async () => {
         const { app } = makeApp({ sessionAgeMinutes: 16 });
-        const response = await post(app, "/account-deletion/reauth/start", {});
+        const response = await post(app.startReauthentication, "/account-deletion/reauth/start", {});
         expect(response.status).toBe(200);
         const data = (await response.json()) as { reauthenticationRequired: boolean; confirmationPath: string };
         expect(data.reauthenticationRequired).toBe(true);
@@ -26,7 +26,7 @@ describe("scheduled account deletion routes", () => {
     it("lets a freshly authenticated user reach confirmation", async () => {
         const store = new StubStore();
         const { app } = makeApp({ sessionAgeMinutes: 5, store });
-        const response = await post(app, "/account-deletion/reauth/start", {});
+        const response = await post(app.startReauthentication, "/account-deletion/reauth/start", {});
         const data = (await response.json()) as { reauthenticationRequired: boolean; confirmationPath: string };
         expect(data.reauthenticationRequired).toBe(false);
         expect(store.lastStart?.alreadyFresh).toBe(true);
@@ -109,14 +109,14 @@ describe("scheduled account deletion routes", () => {
     it("rejects scheduling and cancelling without a trusted Origin", async () => {
         const store = new StubStore();
         const { app } = makeApp({ store });
-        const scheduled = await app.handle(
+        const scheduled = await app.schedule(
             new Request("http://localhost/account-deletion/schedule", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ challenge: "a".repeat(43), confirmationPhrase: "DELETE MY DATA", scopes: osuGuessrOnly }),
             }),
         );
-        const cancelled = await app.handle(new Request("http://localhost/account-deletion/schedule", { method: "DELETE" }));
+        const cancelled = await app.cancel(new Request("http://localhost/account-deletion/schedule", { method: "DELETE" }));
         expect(scheduled.status).toBe(403);
         expect(cancelled.status).toBe(403);
         expect(store.cancelCalls).toBe(0);
@@ -125,7 +125,7 @@ describe("scheduled account deletion routes", () => {
     it("cancels a pending deletion for the signed-in user", async () => {
         const store = new StubStore();
         const { app } = makeApp({ store, userId: "user-3" });
-        const response = await app.handle(
+        const response = await app.cancel(
             new Request("http://localhost/account-deletion/schedule", { method: "DELETE", headers: { Origin: "http://localhost" } }),
         );
         expect(response.status).toBe(200);
@@ -136,7 +136,7 @@ describe("scheduled account deletion routes", () => {
         const store = new StubStore();
         store.cancelError = new AccountDeletionStoreError("not_scheduled");
         const { app } = makeApp({ store });
-        const response = await app.handle(
+        const response = await app.cancel(
             new Request("http://localhost/account-deletion/schedule", { method: "DELETE", headers: { Origin: "http://localhost" } }),
         );
         expect(response.status).toBe(404);
@@ -150,7 +150,7 @@ describe("scheduled account deletion routes", () => {
             purgeAfter: new Date(now.getTime() + DELETION_GRACE_PERIOD_MS),
         };
         const { app } = makeApp({ store });
-        const response = await app.handle(new Request("http://localhost/account-deletion/status"));
+        const response = await app.getStatus(new Request("http://localhost/account-deletion/status"));
         expect(await response.json()).toEqual({
             scheduled: {
                 scopes: osuGuessrOnly,
@@ -172,7 +172,7 @@ function makeApp({
     store?: StubStore;
     userId?: string;
 }) {
-    const routes = createAccountDeletionRoutes({
+    const routes = createAccountDeletionHandlers({
         getSession: async () =>
             authenticated
                 ? {
@@ -186,8 +186,8 @@ function makeApp({
     return { app: routes, store };
 }
 
-function post(app: ReturnType<typeof createAccountDeletionRoutes>, path: string, body: Record<string, unknown>) {
-    return app.handle(
+function post(handler: (request: Request) => Promise<Response>, path: string, body: Record<string, unknown>) {
+    return handler(
         new Request(`http://localhost${path}`, {
             method: "POST",
             headers: { "Content-Type": "application/json", Origin: "http://localhost" },
@@ -196,8 +196,8 @@ function post(app: ReturnType<typeof createAccountDeletionRoutes>, path: string,
     );
 }
 
-function schedule(app: ReturnType<typeof createAccountDeletionRoutes>, body: Record<string, unknown>) {
-    return post(app, "/account-deletion/schedule", body);
+function schedule(app: ReturnType<typeof createAccountDeletionHandlers>, body: Record<string, unknown>) {
+    return post(app.schedule, "/account-deletion/schedule", body);
 }
 
 class StubStore implements AccountDeletionStore {

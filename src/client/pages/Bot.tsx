@@ -7,9 +7,6 @@ import {
     ProductHero,
     ProductPage,
     ProductSection,
-    ProductSplit,
-    ProductStep,
-    ProductSteps,
     productBodyClass,
     productHeroCopyClass,
     productTitleClass,
@@ -24,7 +21,7 @@ const commands = [
     ["/top", "Top scores", "Best plays for a linked user or an osu! username."],
     ["/beatmap", "Beatmap details", "Difficulty, BPM, length, object counts, estimates, and map links."],
     ["/compare", "Score comparison", "Compare a player on a beatmap already shared in the conversation."],
-    ["/whatif", "Performance scenarios", "See the pp and rank you would reach with hypothetical plays."],
+    ["/whatif", "What-if rank", "See the pp and rank you would reach with hypothetical plays."],
 ] as const;
 
 export default function Bot() {
@@ -35,10 +32,7 @@ export default function Bot() {
             <ProductHero>
                 <div className={productHeroCopyClass}>
                     <h1 className={productTitleClass}>{product.name}</h1>
-                    <p className={productBodyClass}>
-                        Look up players, scores, and beatmaps inside Discord. Link an osu! account once to use your own profile as the
-                        default in supported commands.
-                    </p>
+                    <p className={productBodyClass}>Look up osu! players, scores, and beatmaps in Discord.</p>
                     <HeroActions>
                         <ActionLink href={product.links.primary} external>
                             Add to Discord
@@ -77,40 +71,19 @@ export default function Bot() {
                 </div>
             </ProductSection>
 
-            <ProductSplit>
-                <div>
-                    <h2 className={sectionHeadingClass}>Link your osu! account</h2>
-                    <p className={sectionBodyClass}>
-                        Run <code>/link</code> in your Discord server for a private, one-time link, or sign in with Discord and connect your
-                        osu! account from your Hanami Web profile. You can also change the bot’s display settings there.
-                    </p>
-                    <TextLink className="mt-3" href="/profile">
-                        Open account settings
-                    </TextLink>
-                </div>
-                <ProductSteps>
-                    <ProductStep>
-                        <strong>Connect</strong>
-                        <p>
-                            Link from Discord with <code>/link</code> or connect your osu! account in your web profile.
-                        </p>
-                    </ProductStep>
-                    <ProductStep>
-                        <strong>Choose defaults</strong>
-                        <p>Set game mode, score source, embed size, and embed style.</p>
-                    </ProductStep>
-                    <ProductStep>
-                        <strong>Use commands</strong>
-                        <p>Player commands use your linked osu! account by default.</p>
-                    </ProductStep>
-                </ProductSteps>
-            </ProductSplit>
+            <ProductSection>
+                <h2 className={sectionHeadingClass}>Link your osu! account</h2>
+                <p className={sectionBodyClass}>
+                    Run <code>/link</code> in Discord or link osu! from your Hanami profile. Player commands will use your account by
+                    default. You can change your game mode, score source, and embed settings in your profile.
+                </p>
+                <TextLink className="mt-3" href="/profile">
+                    Open account settings
+                </TextLink>
+            </ProductSection>
 
             <ProductFootnote>
-                <p>
-                    <strong>Privacy note:</strong> unlinking osu! removes the ID link; it does not delete the web account, bot settings, or
-                    other service data.
-                </p>
+                <p>Unlinking osu! keeps your Hanami account and bot settings.</p>
                 <TextLink href="/legal/data-deletion">Account deletion details</TextLink>
             </ProductFootnote>
         </ProductPage>

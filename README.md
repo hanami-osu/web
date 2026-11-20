@@ -17,7 +17,7 @@ Hanami Web serves the public project site, owns canonical Hanami accounts, and a
 
 - Next.js App Router and React for the website
 - Bun for the runtime and package manager
-- Elysia for the existing API handlers
+- Native Next.js Route Handlers for the API
 - Prisma 7 with MariaDB
 - Better Auth for sessions, provider accounts, and the OAuth provider
 
@@ -75,6 +75,7 @@ The full list is in `.env.example`. The important values are:
 | `OSU_CLIENT_ID` / `OSU_CLIENT_SECRET`               | osu! OAuth application                              |
 | `BOT_LINK_SECRET`                                   | Shared secret for bot link tickets                  |
 | `OSU_GUESSR_CLIENT_ID` / `OSU_GUESSR_REDIRECT_URIS` | Public osu!guessr OIDC client                       |
+| `GITHUB_*`, `BMC_WEBHOOK_SECRET`                    | Hanami supporter linking and payment webhooks       |
 | `TEST_DATABASE_URL`                                 | Optional disposable database for integration tests  |
 
 Register the matching callback URLs with Discord (`/api/auth/callback/discord`) and osu! (`/api/auth/callback/osu`). Production callbacks must use HTTPS.
@@ -104,6 +105,14 @@ Terminate TLS before the application and set `BETTER_AUTH_URL` to the public HTT
 ## Account data
 
 Hanami Web is the canonical identity store. Hanami Bot keeps a small compatibility database containing its own user settings. The web application writes the Discord-to-osu! mapping needed by the bot and the bot preferences edited on the profile page, and deletes the user's row when a Hanami account is deleted. It never treats that database as a source of canonical identities.
+
+## Hanami supporter
+
+Supporters pay on Buy Me a Coffee or GitHub Sponsors and link that account on the supporter page (Buy Me a Coffee uses a one-time claim code pasted into the support note). Each platform's webhook keeps memberships current. One-time payments add time at $1 = 10 days; that time is saved while a membership is active. Anyone who has paid keeps the badge. Apps read the state through the `supporter` OIDC scope (`supporter_badge`, `supporter_active`, `supporter_until` claims), while osu!guessr uses the permanent badge. Badges are also pushed to osu!guessr's `POST /api/internal/supporter` through `OSU_GUESSR_INTERNAL_URL` / `OSU_GUESSR_INTERNAL_SECRET`; Web keeps failed deliveries pending and retries them at startup and every minute. Deploy Hanami Web (and reconcile the OIDC client) before osu!guessr starts requesting the `supporter` scope.
+
+GitHub linking checks the existing sponsorship to the account in `siteConfig.links.githubSponsors`, including a one-time payment received before webhooks were enabled.
+
+Grant time or the badge by hand with `bun run supporter:grant -- --osu <osu id> --usd <amount>` or `--badge-only`.
 
 ## Security
 
