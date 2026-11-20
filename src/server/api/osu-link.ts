@@ -1,4 +1,4 @@
-import { Elysia } from "elysia";
+import { jsonResponse, readJson } from "../security/http";
 
 import { isRecord } from "@/lib/record";
 import { defaultSettings, type BotSettings } from "@/lib/bot-settings";
@@ -6,130 +6,115 @@ import { defaultSettings, type BotSettings } from "@/lib/bot-settings";
 import { botPrisma } from "../database/bot";
 import { serverIdentity } from "../identity";
 
-export const osuLinkRoute = new Elysia()
-    .get("/osu-link/status", async ({ request, set }) => {
-        const identity = await serverIdentity.getCurrent(request.headers);
-        if (!identity) {
-            set.status = 401;
-            return { error: "Unauthorized" };
-        }
-        if (new URL(request.url).searchParams.size > 0) {
-            set.status = 400;
-            return { error: "Invalid request" };
+export async function getOsuLinkStatus(request: Request): Promise<Response> {
+    const identity = await serverIdentity.getCurrent(request.headers);
+    if (!identity) {
+        return jsonResponse({ error: "Unauthorized" }, 401);
+    }
+    if (new URL(request.url).searchParams.size > 0) {
+        return jsonResponse({ error: "Invalid request" }, 400);
+    }
+
+    if (!hasDatabaseConfiguration()) {
+        return jsonResponse({ error: "Server configuration error" }, 500);
+    }
+
+    try {
+        const discordId = await serverIdentity.resolveDiscordId(identity.userId);
+        if (!discordId) {
+            return jsonResponse({ error: "No Discord account is linked to this session" }, 400);
         }
 
-        if (!hasDatabaseConfiguration()) {
-            set.status = 500;
-            return { error: "Server configuration error" };
+        const user = await botPrisma.user.findUnique({ where: { id: discordId }, select: { banchoId: true } });
+        const banchoId = user?.banchoId;
+        if (!banchoId) return jsonResponse({ linked: false });
+
+        const profile = await fetchPublicOsuProfile(banchoId);
+        return jsonResponse({
+            linked: true,
+            banchoId,
+            username: profile?.username ?? "Unknown osu! player",
+            avatarUrl: profile?.avatarUrl ?? `https://a.ppy.sh/${banchoId}`,
+            globalRank: profile?.globalRank ?? null,
+        });
+    } catch (error) {
+        logRouteFailure("read osu! link status", error);
+        return jsonResponse({ error: "Could not read the osu! link status" }, 500);
+    }
+}
+
+export async function getBotSettings(request: Request): Promise<Response> {
+    const identity = await serverIdentity.getCurrent(request.headers);
+    if (!identity) {
+        return jsonResponse({ error: "Unauthorized" }, 401);
+    }
+    if (new URL(request.url).searchParams.size > 0) {
+        return jsonResponse({ error: "Invalid request" }, 400);
+    }
+
+    if (!hasDatabaseConfiguration()) {
+        return jsonResponse({ error: "Server configuration error" }, 500);
+    }
+
+    try {
+        const discordId = await serverIdentity.resolveDiscordId(identity.userId);
+        if (!discordId) {
+            return jsonResponse({ error: "No Discord account is linked to this session" }, 400);
         }
 
-        try {
-            const discordId = await serverIdentity.resolveDiscordId(identity.userId);
-            if (!discordId) {
-                set.status = 400;
-                return { error: "No Discord account is linked to this session" };
-            }
+        const settings = await botPrisma.user.findUnique({
+            where: { id: discordId },
+            select: { mode: true, score_embeds: true, embed_type: true, score_data: true },
+        });
+        if (!settings) return jsonResponse(defaultSettings);
 
-            const user = await botPrisma.user.findUnique({ where: { id: discordId }, select: { banchoId: true } });
-            const banchoId = user?.banchoId;
-            if (!banchoId) return { linked: false };
+        return jsonResponse({
+            mode: parseMode(settings.mode),
+            score_embeds: parseBinary(settings.score_embeds, defaultSettings.score_embeds),
+            embed_type: parseEmbedType(settings.embed_type),
+            score_data: parseScoreData(settings.score_data),
+        } satisfies BotSettings);
+    } catch (error) {
+        logRouteFailure("read bot preferences", error);
+        return jsonResponse({ error: "Could not read bot preferences" }, 500);
+    }
+}
 
-            const profile = await fetchPublicOsuProfile(banchoId);
-            return {
-                linked: true,
-                banchoId,
-                username: profile?.username ?? "Unknown osu! player",
-                avatarUrl: profile?.avatarUrl ?? `https://a.ppy.sh/${banchoId}`,
-                globalRank: profile?.globalRank ?? null,
-            };
-        } catch (error) {
-            logRouteFailure("read osu! link status", error);
-            set.status = 500;
-            return { error: "Could not read the osu! link status" };
-        }
-    })
-    .get("/osu-link/settings", async ({ request, set }) => {
-        const identity = await serverIdentity.getCurrent(request.headers);
-        if (!identity) {
-            set.status = 401;
-            return { error: "Unauthorized" };
-        }
-        if (new URL(request.url).searchParams.size > 0) {
-            set.status = 400;
-            return { error: "Invalid request" };
-        }
+export async function updateBotSettings(request: Request): Promise<Response> {
+    const identity = await serverIdentity.getCurrent(request.headers);
+    if (!identity) {
+        return jsonResponse({ error: "Unauthorized" }, 401);
+    }
+    if (new URL(request.url).searchParams.size > 0) {
+        return jsonResponse({ error: "Invalid request" }, 400);
+    }
 
-        if (!hasDatabaseConfiguration()) {
-            set.status = 500;
-            return { error: "Server configuration error" };
-        }
+    const settings = parseSettings(await readJson(request));
+    if (!settings) {
+        return jsonResponse({ error: "Invalid bot preferences" }, 400);
+    }
 
-        try {
-            const discordId = await serverIdentity.resolveDiscordId(identity.userId);
-            if (!discordId) {
-                set.status = 400;
-                return { error: "No Discord account is linked to this session" };
-            }
+    if (!hasDatabaseConfiguration()) {
+        return jsonResponse({ error: "Server configuration error" }, 500);
+    }
 
-            const settings = await botPrisma.user.findUnique({
-                where: { id: discordId },
-                select: { mode: true, score_embeds: true, embed_type: true, score_data: true },
-            });
-            if (!settings) return defaultSettings;
-
-            return {
-                mode: parseMode(settings.mode),
-                score_embeds: parseBinary(settings.score_embeds, defaultSettings.score_embeds),
-                embed_type: parseEmbedType(settings.embed_type),
-                score_data: parseScoreData(settings.score_data),
-            } satisfies BotSettings;
-        } catch (error) {
-            logRouteFailure("read bot preferences", error);
-            set.status = 500;
-            return { error: "Could not read bot preferences" };
-        }
-    })
-    .post("/osu-link/settings", async ({ request, body, set }) => {
-        const identity = await serverIdentity.getCurrent(request.headers);
-        if (!identity) {
-            set.status = 401;
-            return { error: "Unauthorized" };
-        }
-        if (new URL(request.url).searchParams.size > 0) {
-            set.status = 400;
-            return { error: "Invalid request" };
+    try {
+        const discordId = await serverIdentity.resolveDiscordId(identity.userId);
+        if (!discordId) {
+            return jsonResponse({ error: "No Discord account is linked to this session" }, 400);
         }
 
-        const settings = parseSettings(body);
-        if (!settings) {
-            set.status = 400;
-            return { error: "Invalid bot preferences" };
-        }
-
-        if (!hasDatabaseConfiguration()) {
-            set.status = 500;
-            return { error: "Server configuration error" };
-        }
-
-        try {
-            const discordId = await serverIdentity.resolveDiscordId(identity.userId);
-            if (!discordId) {
-                set.status = 400;
-                return { error: "No Discord account is linked to this session" };
-            }
-
-            await botPrisma.user.upsert({
-                where: { id: discordId },
-                create: { id: discordId, ...settings },
-                update: settings,
-            });
-            return { success: true };
-        } catch (error) {
-            logRouteFailure("update bot preferences", error);
-            set.status = 500;
-            return { error: "Could not update bot preferences" };
-        }
-    });
+        await botPrisma.user.upsert({
+            where: { id: discordId },
+            create: { id: discordId, ...settings },
+            update: settings,
+        });
+        return jsonResponse({ success: true });
+    } catch (error) {
+        logRouteFailure("update bot preferences", error);
+        return jsonResponse({ error: "Could not update bot preferences" }, 500);
+    }
+}
 
 async function fetchPublicOsuProfile(banchoId: string): Promise<{
     username: string;

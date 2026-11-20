@@ -17,7 +17,7 @@ Hanami Web serves the public project site, owns canonical Hanami accounts, and a
 
 - Next.js App Router and React for the website
 - Bun for the runtime and package manager
-- Elysia for the existing API handlers
+- Native Next.js Route Handlers for the API
 - Prisma 7 with MariaDB
 - Better Auth for sessions, provider accounts, and the OAuth provider
 

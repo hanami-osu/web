@@ -1,11 +1,9 @@
-import { Elysia } from "elysia";
-
 import { isRecord } from "@/lib/record";
 
 import { auth, botAccountCompatibility, trustedOrigins } from "../auth";
 import { botPrisma } from "../database/bot";
 import { webPrisma } from "../database/web";
-import { logSafeFailure } from "../security/http";
+import { errorResponse, jsonResponse, logSafeFailure, readJson } from "../security/http";
 import {
     createChallengeToken,
     hashChallengeToken,
@@ -59,13 +57,12 @@ const productionDependencies: AccountDeletionRouteDependencies = {
     now: () => new Date(),
 };
 
-export function createAccountDeletionRoutes(dependencies: AccountDeletionRouteDependencies = productionDependencies) {
-    return new Elysia({ prefix: "/account-deletion" })
-        .post("/reauth/start", async ({ request, set }) => {
-            set.headers["Cache-Control"] = "no-store";
+export function createAccountDeletionHandlers(dependencies: AccountDeletionRouteDependencies = productionDependencies) {
+    return {
+        async startReauthentication(request: Request): Promise<Response> {
             const session = await dependencies.getSession(request.headers);
-            if (!session) return fail(set, 401, "Sign in before continuing.");
-            if (!hasValidOrigin(request)) return fail(set, 403, "This action could not be verified.");
+            if (!session) return errorResponse(401, "Sign in before continuing.");
+            if (!hasValidOrigin(request)) return errorResponse(403, "This action could not be verified.");
 
             try {
                 const now = dependencies.now();
@@ -78,23 +75,22 @@ export function createAccountDeletionRoutes(dependencies: AccountDeletionRouteDe
                     alreadyFresh,
                 });
 
-                return {
+                return jsonResponse({
                     reauthenticationRequired: !alreadyFresh,
                     confirmationPath: `/profile/privacy/confirm#challenge=${encodeURIComponent(challenge)}`,
-                };
+                });
             } catch (error) {
                 logSafeFailure("start account-deletion reauthentication", error);
-                return fail(set, 500, "Reauthentication could not be started.");
+                return errorResponse(500, "Reauthentication could not be started.");
             }
-        })
-        .post("/reauth/complete", async ({ request, body, set }) => {
-            set.headers["Cache-Control"] = "no-store";
+        },
+        async completeReauthentication(request: Request): Promise<Response> {
             const session = await dependencies.getSession(request.headers);
-            if (!session) return fail(set, 401, "Sign in before continuing.");
-            if (!hasValidOrigin(request)) return fail(set, 403, "This action could not be verified.");
+            if (!session) return errorResponse(401, "Sign in before continuing.");
+            if (!hasValidOrigin(request)) return errorResponse(403, "This action could not be verified.");
 
-            const challenge = readChallenge(body);
-            if (!challenge) return fail(set, 400, "The reauthentication request is invalid.");
+            const challenge = readChallenge(await readJson(request));
+            if (!challenge) return errorResponse(400, "The reauthentication request is invalid.");
 
             try {
                 const now = dependencies.now();
@@ -104,35 +100,33 @@ export function createAccountDeletionRoutes(dependencies: AccountDeletionRouteDe
                     sessionCreatedAt: new Date(session.session.createdAt),
                     now,
                 });
-                return { ready: true, reauthenticatedAt: reauthenticatedAt.toISOString() };
+                return jsonResponse({ ready: true, reauthenticatedAt: reauthenticatedAt.toISOString() });
             } catch (error) {
-                return handleStoreFailure(set, error, "Reauthentication could not be completed.");
+                return handleStoreFailure(error, "Reauthentication could not be completed.");
             }
-        })
-        .get("/status", async ({ request, set }) => {
-            set.headers["Cache-Control"] = "no-store";
+        },
+        async getStatus(request: Request): Promise<Response> {
             const session = await dependencies.getSession(request.headers);
-            if (!session) return fail(set, 401, "Sign in before continuing.");
+            if (!session) return errorResponse(401, "Sign in before continuing.");
 
             try {
                 const status = await dependencies.store.getDeletionStatus(session.user.id);
-                return { scheduled: status ? serializeStatus(status) : null };
+                return jsonResponse({ scheduled: status ? serializeStatus(status) : null });
             } catch (error) {
                 logSafeFailure("read the account-deletion status", error);
-                return fail(set, 500, "The deletion status could not be loaded.");
+                return errorResponse(500, "The deletion status could not be loaded.");
             }
-        })
-        .post("/schedule", async ({ request, body, set }) => {
-            set.headers["Cache-Control"] = "no-store";
+        },
+        async schedule(request: Request): Promise<Response> {
             const session = await dependencies.getSession(request.headers);
-            if (!session) return fail(set, 401, "Sign in before continuing.");
-            if (!hasValidOrigin(request)) return fail(set, 403, "This action could not be verified.");
+            if (!session) return errorResponse(401, "Sign in before continuing.");
+            if (!hasValidOrigin(request)) return errorResponse(403, "This action could not be verified.");
 
-            const parsed = readScheduleBody(body);
-            if (!parsed.challenge) return fail(set, 400, "The reauthentication request is invalid.");
-            if (!parsed.scopes) return fail(set, 400, "Choose what to delete.");
+            const parsed = readScheduleBody(await readJson(request));
+            if (!parsed.challenge) return errorResponse(400, "The reauthentication request is invalid.");
+            if (!parsed.scopes) return errorResponse(400, "Choose what to delete.");
             if (!isValidConfirmationPhrase(parsed.confirmationPhrase)) {
-                return fail(set, 400, "The confirmation phrase does not match.");
+                return errorResponse(400, "The confirmation phrase does not match.");
             }
 
             try {
@@ -142,27 +136,27 @@ export function createAccountDeletionRoutes(dependencies: AccountDeletionRouteDe
                     scopes: parsed.scopes,
                     now: dependencies.now(),
                 });
-                return { scheduled: serializeStatus(status) };
+                return jsonResponse({ scheduled: serializeStatus(status) });
             } catch (error) {
-                return handleStoreFailure(set, error, "The deletion could not be scheduled.");
+                return handleStoreFailure(error, "The deletion could not be scheduled.");
             }
-        })
-        .delete("/schedule", async ({ request, set }) => {
-            set.headers["Cache-Control"] = "no-store";
+        },
+        async cancel(request: Request): Promise<Response> {
             const session = await dependencies.getSession(request.headers);
-            if (!session) return fail(set, 401, "Sign in before continuing.");
-            if (!hasValidOrigin(request)) return fail(set, 403, "This action could not be verified.");
+            if (!session) return errorResponse(401, "Sign in before continuing.");
+            if (!hasValidOrigin(request)) return errorResponse(403, "This action could not be verified.");
 
             try {
                 await dependencies.store.cancelDeletion(session.user.id);
-                return { cancelled: true };
+                return jsonResponse({ cancelled: true });
             } catch (error) {
-                return handleStoreFailure(set, error, "The deletion could not be cancelled.");
+                return handleStoreFailure(error, "The deletion could not be cancelled.");
             }
-        });
+        },
+    };
 }
 
-export const accountDeletionRoutes = createAccountDeletionRoutes();
+export const accountDeletionHandlers = createAccountDeletionHandlers();
 
 function hasValidOrigin(request: Request): boolean {
     const origin = request.headers.get("origin");
@@ -194,28 +188,23 @@ function serializeStatus(status: DeletionStatus) {
     };
 }
 
-function handleStoreFailure(set: { status?: number | string }, error: unknown, fallbackMessage: string) {
+function handleStoreFailure(error: unknown, fallbackMessage: string) {
     if (error instanceof AccountDeletionStoreError) {
         switch (error.code) {
             case "challenge_invalid":
             case "challenge_stale":
-                return fail(set, 403, "Fresh sign-in is required. Please start again.");
+                return errorResponse(403, "Fresh sign-in is required. Please start again.");
             case "already_scheduled":
-                return fail(set, 409, "A deletion is already scheduled. Cancel it before choosing again.");
+                return errorResponse(409, "A deletion is already scheduled. Cancel it before choosing again.");
             case "not_scheduled":
-                return fail(set, 404, "No deletion is scheduled for this account.");
+                return errorResponse(404, "No deletion is scheduled for this account.");
             case "scope_unavailable":
-                return fail(set, 400, "This account has no data for one of the selected services.");
+                return errorResponse(400, "This account has no data for one of the selected services.");
             case "service_unavailable":
-                return fail(set, 503, "A linked service is temporarily unavailable. Nothing was changed.");
+                return errorResponse(503, "A linked service is temporarily unavailable. Nothing was changed.");
         }
     }
 
     logSafeFailure("change an account deletion", error);
-    return fail(set, 500, fallbackMessage);
-}
-
-function fail(set: { status?: number | string }, status: number, error: string) {
-    set.status = status;
-    return { error };
+    return errorResponse(500, fallbackMessage);
 }

@@ -1,11 +1,9 @@
-import { Elysia } from "elysia";
-
 import { auth, botAccountCompatibility, trustedOrigins } from "../auth";
 import { webPrisma } from "../database/web";
 import { serverIdentity, type HanamiIdentity } from "../identity";
 import { Prisma } from "../../generated/prisma/web/client";
 import { createOsuPlaceholderEmail } from "../../lib/osu-identity";
-import { logSafeFailure } from "../security/http";
+import { errorResponse, jsonResponse, logSafeFailure, readJson } from "../security/http";
 import { CanonicalAccountService, createCanonicalAccountDatabase, isLoginProvider, type LoginMethod, type LoginProvider } from "./service";
 
 export interface AccountRouteDependencies {
@@ -26,32 +24,28 @@ export interface AccountRouteDependencies {
     unlink(input: { userId: string; provider: LoginProvider; providerAccountId: string; headers: Headers }): Promise<void>;
 }
 
-export function createAccountRoutes(dependencies: AccountRouteDependencies) {
-    return new Elysia({ prefix: "/account" })
-        .get("/providers", async ({ request, set }) => {
-            set.headers["Cache-Control"] = "no-store";
+export function createAccountHandlers(dependencies: AccountRouteDependencies) {
+    return {
+        async listProviders(request: Request): Promise<Response> {
             const identity = await dependencies.getCurrent(request.headers);
             if (!identity) {
-                set.status = 401;
-                return { error: "Unauthorized" };
+                return jsonResponse({ error: "Unauthorized" }, 401);
             }
 
             try {
-                return { loginMethods: await dependencies.listLoginMethods(identity.userId) };
+                return jsonResponse({ loginMethods: await dependencies.listLoginMethods(identity.userId) });
             } catch (error) {
                 logSafeFailure("read canonical login methods", error);
-                set.status = 500;
-                return { error: "Linked accounts could not be loaded." };
+                return jsonResponse({ error: "Linked accounts could not be loaded." }, 500);
             }
-        })
-        .post("/providers/osu/link/continuation", async ({ body, request, set }) => {
-            set.headers["Cache-Control"] = "no-store";
+        },
+        async continueOsuLink(request: Request): Promise<Response> {
             const identity = await dependencies.getCurrent(request.headers);
-            if (!identity) return fail(set, 401, "Sign in before linking an account.");
-            if (!hasTrustedOrigin(request, trustedOrigins)) return fail(set, 403, "This action could not be verified.");
+            if (!identity) return errorResponse(401, "Sign in before linking an account.");
+            if (!hasTrustedOrigin(request, trustedOrigins)) return errorResponse(403, "This action could not be verified.");
 
-            const oauthQuery = readContinuationOAuthQuery(body);
-            if (!oauthQuery) return fail(set, 400, "This authorization request could not be verified.");
+            const oauthQuery = readContinuationOAuthQuery(await readJson(request));
+            if (!oauthQuery) return errorResponse(400, "This authorization request could not be verified.");
 
             try {
                 const callbackURL = createContinuationURL(request.url, oauthQuery);
@@ -71,73 +65,74 @@ export function createAccountRoutes(dependencies: AccountRouteDependencies) {
                 logSafeFailure("start osu account linking for authorization continuation", error);
                 const details = readErrorDetails(error);
                 if (isInvalidOAuthSignature(details.code, details.message)) {
-                    return fail(set, 400, "This authorization request could not be verified.");
+                    return errorResponse(400, "This authorization request could not be verified.");
                 }
-                if (isOwnershipConflict(details.code, details.message)) return fail(set, 409, providerConflictMessage("osu"));
-                return fail(set, 502, "osu! account linking could not be started.");
+                if (isOwnershipConflict(details.code, details.message)) return errorResponse(409, providerConflictMessage("osu"));
+                return errorResponse(502, "osu! account linking could not be started.");
             }
-        })
-        .post("/providers/:provider/link", async ({ params, request, set }) => {
-            set.headers["Cache-Control"] = "no-store";
+        },
+        async linkProvider(request: Request, { params }: { params: Promise<{ provider: string }> }): Promise<Response> {
+            const { provider } = await params;
             const identity = await dependencies.getCurrent(request.headers);
-            if (!identity) return fail(set, 401, "Sign in before linking an account.");
-            if (!hasTrustedOrigin(request, trustedOrigins)) return fail(set, 403, "This action could not be verified.");
-            if (!isLoginProvider(params.provider)) return fail(set, 404, "Unsupported login provider.");
+            if (!identity) return errorResponse(401, "Sign in before linking an account.");
+            if (!hasTrustedOrigin(request, trustedOrigins)) return errorResponse(403, "This action could not be verified.");
+            if (!isLoginProvider(provider)) return errorResponse(404, "Unsupported login provider.");
 
             try {
                 const origin = new URL(request.url).origin;
                 const callbackURL = new URL("/profile", origin).toString();
                 const errorCallbackURL = new URL("/profile", origin);
-                errorCallbackURL.searchParams.set("linkError", params.provider);
+                errorCallbackURL.searchParams.set("linkError", provider);
                 const link = await dependencies.beginLink({
                     userId: identity.userId,
-                    provider: params.provider,
+                    provider,
                     headers: request.headers,
                     callbackURL,
                     errorCallbackURL: errorCallbackURL.toString(),
                 });
                 return createLinkResponse(link);
             } catch (error) {
-                logSafeFailure(`start ${params.provider} account linking`, error);
+                logSafeFailure(`start ${provider} account linking`, error);
                 const details = readErrorDetails(error);
-                if (isOwnershipConflict(details.code, details.message)) return fail(set, 409, providerConflictMessage(params.provider));
-                return fail(set, 502, `${providerLabel(params.provider)} linking could not be started.`);
+                if (isOwnershipConflict(details.code, details.message)) return errorResponse(409, providerConflictMessage(provider));
+                return errorResponse(502, `${providerLabel(provider)} linking could not be started.`);
             }
-        })
-        .delete("/providers/:provider", async ({ params, request, set }) => {
-            set.headers["Cache-Control"] = "no-store";
+        },
+        async unlinkProvider(request: Request, { params }: { params: Promise<{ provider: string }> }): Promise<Response> {
+            const { provider } = await params;
             const identity = await dependencies.getCurrent(request.headers);
-            if (!identity) return fail(set, 401, "Sign in before unlinking an account.");
-            if (!hasTrustedOrigin(request, trustedOrigins)) return fail(set, 403, "This action could not be verified.");
-            if (!isLoginProvider(params.provider)) return fail(set, 404, "Unsupported login provider.");
+            if (!identity) return errorResponse(401, "Sign in before unlinking an account.");
+            if (!hasTrustedOrigin(request, trustedOrigins)) return errorResponse(403, "This action could not be verified.");
+            if (!isLoginProvider(provider)) return errorResponse(404, "Unsupported login provider.");
 
             try {
                 const methods = await dependencies.listLoginMethods(identity.userId);
-                const target = methods.find((method) => method.provider === params.provider);
-                if (!target) return fail(set, 409, `${providerLabel(params.provider)} was not found.`);
-                if (methods.length <= 1) return fail(set, 409, "Your final sign-in method cannot be removed.");
+                const target = methods.find((method) => method.provider === provider);
+                if (!target) return errorResponse(409, `${providerLabel(provider)} was not found.`);
+                if (methods.length <= 1) return errorResponse(409, "Your final sign-in method cannot be removed.");
                 await dependencies.clearBotLink({
                     userId: identity.userId,
-                    provider: params.provider,
+                    provider,
                     providerAccountId: target.providerUserId,
                 });
                 await dependencies.unlink({
                     userId: identity.userId,
-                    provider: params.provider,
+                    provider,
                     providerAccountId: target.providerUserId,
                     headers: request.headers,
                 });
-                return { unlinked: true };
+                return jsonResponse({ unlinked: true });
             } catch (error) {
-                logSafeFailure(`unlink ${params.provider} account`, error);
-                return fail(set, 500, `${providerLabel(params.provider)} could not be unlinked.`);
+                logSafeFailure(`unlink ${provider} account`, error);
+                return errorResponse(500, `${providerLabel(provider)} could not be unlinked.`);
             }
-        });
+        },
+    };
 }
 
 const productionAccountService = new CanonicalAccountService(createCanonicalAccountDatabase(webPrisma));
 
-export const accountRoutes = createAccountRoutes({
+export const accountHandlers = createAccountHandlers({
     getCurrent: (headers) => serverIdentity.getCurrent(headers),
     listLoginMethods: async (userId) => {
         const methods = await productionAccountService.listLoginMethods(userId);
@@ -210,11 +205,6 @@ function createLinkResponse(link: { url: string; headers: Headers }): Response {
     const headers = new Headers({ "Cache-Control": "no-store" });
     for (const cookie of link.headers.getSetCookie()) headers.append("Set-Cookie", cookie);
     return Response.json({ url: link.url }, { headers });
-}
-
-function fail(set: { status?: number | string }, status: number, error: string) {
-    set.status = status;
-    return { error };
 }
 
 function isOwnershipConflict(code?: string, message?: string): boolean {

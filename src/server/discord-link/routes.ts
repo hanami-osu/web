@@ -1,6 +1,6 @@
-import { Elysia } from "elysia";
+import { discordLinkTicketStore } from "../auth";
 
-import { logSafeFailure } from "../security/http";
+import { jsonResponse, logSafeFailure, readJson } from "../security/http";
 import { createSecureToken, hashToken } from "../security/tokens";
 import { getBotLinkSecret, hasValidBotAuthorization } from "./bot-auth";
 import type { DiscordLinkTicketStore } from "./tickets";
@@ -13,28 +13,23 @@ interface DiscordLinkRouteDependencies {
     now(): Date;
 }
 
-export function createDiscordLinkRoutes(dependencies: DiscordLinkRouteDependencies) {
-    return new Elysia({ prefix: "/internal" }).post("/discord-link-ticket", async ({ body, request, set }) => {
-        set.headers["Cache-Control"] = "no-store";
-
+export function createDiscordLinkHandler(dependencies: DiscordLinkRouteDependencies) {
+    return async function POST(request: Request): Promise<Response> {
         let expectedSecret: string;
         try {
             expectedSecret = dependencies.getSecret();
         } catch (error) {
             logSafeFailure("load Discord bot link configuration", error);
-            set.status = 500;
-            return { error: "Server configuration error" };
+            return jsonResponse({ error: "Server configuration error" }, 500);
         }
 
         if (!hasValidBotAuthorization(request.headers.get("authorization"), expectedSecret)) {
-            set.status = 401;
-            return { error: "Unauthorized" };
+            return jsonResponse({ error: "Unauthorized" }, 401);
         }
 
-        const input = parseDiscordLinkRequest(body);
+        const input = parseDiscordLinkRequest(await readJson(request));
         if (!input) {
-            set.status = 400;
-            return { error: "Invalid Discord link request" };
+            return jsonResponse({ error: "Invalid Discord link request" }, 400);
         }
 
         let baseUrl: string;
@@ -42,8 +37,7 @@ export function createDiscordLinkRoutes(dependencies: DiscordLinkRouteDependenci
             baseUrl = dependencies.getBaseUrl();
         } catch (error) {
             logSafeFailure("load Discord bot link URL configuration", error);
-            set.status = 500;
-            return { error: "Server configuration error" };
+            return jsonResponse({ error: "Server configuration error" }, 500);
         }
 
         try {
@@ -51,13 +45,12 @@ export function createDiscordLinkRoutes(dependencies: DiscordLinkRouteDependenci
             const ticket = await dependencies.ticketStore.issue({ ...input, tokenHash: await hashToken(token), now: dependencies.now() });
             const url = new URL("/api/auth/bot-link/consume", baseUrl);
             url.searchParams.set("token", token);
-            return { url: url.toString(), expiresAt: ticket.expiresAt.toISOString() };
+            return jsonResponse({ url: url.toString(), expiresAt: ticket.expiresAt.toISOString() });
         } catch (error) {
             logSafeFailure("issue a Discord link ticket", error);
-            set.status = 500;
-            return { error: "The link could not be created" };
+            return jsonResponse({ error: "The link could not be created" }, 500);
         }
-    });
+    };
 }
 
 export function getBetterAuthBaseUrl(): string {
@@ -71,3 +64,8 @@ export const productionDiscordLinkRouteDependencies = {
     getBaseUrl: getBetterAuthBaseUrl,
     now: () => new Date(),
 };
+
+export const discordLinkHandler = createDiscordLinkHandler({
+    ...productionDiscordLinkRouteDependencies,
+    ticketStore: discordLinkTicketStore,
+});
