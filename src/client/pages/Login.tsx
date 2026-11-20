@@ -81,6 +81,11 @@ export default function Login({ osuGuessrClientId = "" }: { osuGuessrClientId?: 
         <AuthLayout>
             <AuthPanel width="compact">
                 <LoginPanel
+                    supporterMessage={
+                        returnTo === routes.supporter
+                            ? "Sign in to Hanami, then get a Buy Me a Coffee code or link GitHub, so we can credit your supporter badge."
+                            : undefined
+                    }
                     error={error}
                     status={
                         deletionScheduled
@@ -98,12 +103,14 @@ export default function Login({ osuGuessrClientId = "" }: { osuGuessrClientId?: 
 
 export function LoginPanel({
     error,
+    supporterMessage,
     status = null,
     mode = "general",
     redirectingProvider,
     onSignIn,
 }: {
     error: string | null;
+    supporterMessage?: string;
     status?: string | null;
     mode?: "general" | "osu" | "osu-guessr";
     redirectingProvider: IdentityProvider | null;
@@ -121,7 +128,7 @@ export function LoginPanel({
                     ? mode === "osu-guessr"
                         ? "osu!guessr signs you in with osu! through Hanami. You’ll return to osu!guessr afterwards."
                         : "Use osu! to return to the requesting app."
-                    : "Sign in with Discord or osu!. If you’ve linked both accounts, you can use either one."}
+                    : (supporterMessage ?? "Sign in with Discord or osu!. If you’ve linked both accounts, you can use either one.")}
             </p>
 
             {status && (

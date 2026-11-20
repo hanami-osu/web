@@ -21,7 +21,7 @@ describe("osu!guessr OAuth client configuration", () => {
             requirePKCE: true,
             subjectType: "public",
             skipConsent: true,
-            scopes: ["openid", "osu", "offline_access"],
+            scopes: ["openid", "osu", "supporter", "offline_access"],
         });
     });
 

@@ -7,7 +7,8 @@ export const siteConfig = {
     links: {
         organization: "https://github.com/hanami-osu",
         community: "https://discord.gg/RcGjBZkDP6",
-        support: "https://github.com/sponsors/yorunoken",
+        githubSponsors: "https://github.com/sponsors/hanami-osu",
+        buyMeACoffee: "https://buymeacoffee.com/yorunoken",
         discordPrivacy: "https://discord.com/privacy",
         osuPrivacy: "https://osu.ppy.sh/legal/en/Privacy",
         cloudflarePrivacy: "https://www.cloudflare.com/privacypolicy/",
@@ -115,6 +116,12 @@ export const routeMetadata = {
         description: "Hanami Companion, an osu! desktop app for Hanami, is being rebuilt from scratch. No release is available yet.",
         indexable: true,
         socialImage: "/products/companion-icon.png",
+    },
+    "/supporter": {
+        title: "Hanami supporter | Hanami",
+        description:
+            "Support Hanami for $3 a month or with a one-time amount on Buy Me a Coffee or GitHub Sponsors, and keep the supporter badge.",
+        indexable: true,
     },
     "/legal": {
         title: "Legal center | Hanami",

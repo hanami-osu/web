@@ -9,6 +9,7 @@
         "db:generate": "bunx prisma generate --schema prisma/web/schema.prisma && bunx prisma generate --schema prisma/bot/schema.prisma",
         "db:migrate": "bun src/scripts/migrate.ts",
         "db:reconcile-oauth-client": "bun src/scripts/reconcile-osu-guessr-client.ts",
+        "supporter:grant": "bun --env-file=.env src/scripts/grant-supporter.ts",
         "format": "prettier . --write",
         "format:check": "prettier . --check",
         "lint": "eslint .",

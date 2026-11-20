@@ -1,6 +1,7 @@
 import type { Prisma, PrismaClient } from "../../generated/prisma/web/client";
 
 import { safelyEqualHashes } from "../security/tokens";
+import { deleteSupporterData } from "../supporter/store";
 import { DELETION_GRACE_PERIOD_MS, REAUTHENTICATION_WINDOW_MS, type DeletionScopes } from "./domain";
 import type { OsuGuessrDeletionClient } from "./osu-guessr";
 
@@ -193,6 +194,7 @@ export class PrismaDeletionRequestStore implements AccountDeletionStore {
                         await transaction.oauthAccessToken.deleteMany({ where: { userId: schedule.userId } });
                         await transaction.oauthRefreshToken.deleteMany({ where: { userId: schedule.userId } });
                         await transaction.oauthConsent.deleteMany({ where: { userId: schedule.userId } });
+                        await deleteSupporterData(transaction, schedule.userId);
                         await transaction.user.deleteMany({ where: { id: schedule.userId } });
                     } else {
                         await transaction.accountDeletionSchedule.deleteMany({ where: { id: schedule.id } });

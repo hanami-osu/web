@@ -1,4 +1,4 @@
-export const osuGuessrScopes = ["openid", "osu", "offline_access"] as const;
+export const osuGuessrScopes = ["openid", "osu", "supporter", "offline_access"] as const;
 
 export interface StaticOAuthClientConfig {
     clientId: string;

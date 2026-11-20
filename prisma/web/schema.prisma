@@ -20,6 +20,10 @@ model User {
   accountDeletionReauthChallenges AccountDeletionReauthChallenge[]
   accountDeletionSchedule         AccountDeletionSchedule?
   osuProfile                      OsuProfile?
+  supporterLinks                  SupporterLink[]
+  supporterStatus                 SupporterStatus?
+  supporterClaimCodes             SupporterClaimCode[]
+  supporterPayments               SupporterPayment[]
   oauthClients                    OauthClient[]                    @relation("OauthClientUser")
   oauthRefreshTokens              OauthRefreshToken[]              @relation("OauthRefreshTokenUser")
   oauthAccessTokens               OauthAccessToken[]               @relation("OauthAccessTokenUser")
@@ -321,4 +325,72 @@ model OauthClientAssertion {
   expiresAt DateTime @db.Timestamp(3)
 
   @@map("oauthClientAssertion")
+}
+
+model SupporterLink {
+  id             String   @id @db.VarChar(36)
+  userId         String   @db.VarChar(36)
+  provider       String   @db.VarChar(16)
+  providerUserId String   @db.VarChar(64)
+  displayName    String?  @db.VarChar(255)
+  linkedAt       DateTime @db.Timestamp(3)
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "supporterLink_user_fk")
+
+  @@unique([provider, providerUserId], map: "supporterLink_provider_unique")
+  @@unique([userId, provider], map: "supporterLink_user_provider_unique")
+  @@map("supporterLink")
+}
+
+model SupporterMembership {
+  id             String   @id @db.VarChar(36)
+  provider       String   @db.VarChar(16)
+  providerUserId String   @db.VarChar(64)
+  active         Boolean
+  updatedAt      DateTime @db.Timestamp(3)
+
+  @@unique([provider, providerUserId], map: "supporterMembership_provider_unique")
+  @@map("supporterMembership")
+}
+
+model SupporterPayment {
+  id             String    @id @db.VarChar(36)
+  provider       String    @db.VarChar(16)
+  externalId     String    @db.VarChar(128)
+  providerUserId String    @db.VarChar(64)
+  amountCents    Int
+  days           Int
+  receivedAt     DateTime  @db.Timestamp(3)
+  refundedAt     DateTime? @db.Timestamp(3)
+  creditedUserId String?   @db.VarChar(36)
+  creditedUser   User?     @relation(fields: [creditedUserId], references: [id], onDelete: SetNull, onUpdate: NoAction, map: "supporterPayment_user_fk")
+
+  @@unique([provider, externalId], map: "supporterPayment_external_unique")
+  @@index([provider, providerUserId], map: "supporterPayment_provider_user_idx")
+  @@index([creditedUserId], map: "supporterPayment_credited_user_idx")
+  @@map("supporterPayment")
+}
+
+model SupporterStatus {
+  userId           String    @id @db.VarChar(36)
+  badgeSince       DateTime? @db.Timestamp(3)
+  bankedSeconds    Int       @default(0)
+  bankUpdatedAt    DateTime  @db.Timestamp(3)
+  membershipActive Boolean   @default(false)
+  osuGuessrBadgeSynced Boolean @default(false)
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "supporterStatus_user_fk")
+
+  @@map("supporterStatus")
+}
+
+model SupporterClaimCode {
+  id         String    @id @db.VarChar(36)
+  userId     String    @db.VarChar(36)
+  codeHash   String    @unique(map: "supporterClaimCode_hash_unique") @db.Char(64)
+  createdAt  DateTime  @db.Timestamp(3)
+  expiresAt  DateTime  @db.Timestamp(3)
+  consumedAt DateTime? @db.Timestamp(3)
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "supporterClaimCode_user_fk")
+
+  @@index([userId], map: "supporterClaimCode_user_idx")
+  @@map("supporterClaimCode")
 }

@@ -1,3 +1,4 @@
+import { routes } from "@/client/routes/paths";
 import Footer from "@/components/footer";
 import Header from "@/components/header";
 import {
@@ -114,10 +115,10 @@ export default function Home() {
                         <div className="p-5" id="support">
                             <h2 className={sectionHeadingClass}>Support Hanami</h2>
                             <p className="mt-2 max-w-[52ch] text-sm leading-relaxed text-muted">
-                                GitHub Sponsors contributions cover hosting and maintenance.
+                                $3 a month or a one-time amount covers hosting and development, and you keep the supporter badge.
                             </p>
-                            <TextLink className="mt-2" href={siteConfig.links.support} external>
-                                Sponsor on GitHub
+                            <TextLink className="mt-2" href={routes.supporter}>
+                                Become a supporter
                             </TextLink>
                         </div>
                     </div>

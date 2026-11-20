@@ -45,9 +45,9 @@ export default function Footer() {
                         <a className={footerLinkClass} href={siteConfig.links.community} target="_blank" rel="noreferrer">
                             Community <ArrowUpRight aria-hidden="true" />
                         </a>
-                        <a className={footerLinkClass} href={siteConfig.links.support} target="_blank" rel="noreferrer">
-                            Support us <ArrowUpRight aria-hidden="true" />
-                        </a>
+                        <PrefetchLink className={footerLinkClass} href={routes.supporter} prefetch="intent">
+                            Support us
+                        </PrefetchLink>
                     </div>
                 </div>
             </div>

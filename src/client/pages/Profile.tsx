@@ -13,6 +13,7 @@ import {
     type LoginMethod,
     type ProfileAction,
 } from "@/components/account/profile-sections";
+import { SupporterSection } from "@/components/account/supporter-section";
 import { formMessageClass } from "@/components/ui/action-styles";
 import { cn } from "@/lib/utils";
 import type { BotSettings } from "@/lib/bot-settings";
@@ -147,7 +148,7 @@ export default function Profile() {
                 <AccountPageIntro
                     eyebrow="Hanami account"
                     title={displayName}
-                    description="Manage your linked accounts and bot preferences."
+                    description="Manage your linked accounts, supporter status and bot preferences."
                 />
 
                 {error && (
@@ -165,6 +166,8 @@ export default function Profile() {
                     onLink={handleLinkProvider}
                     onUnlink={handleUnlinkProvider}
                 />
+
+                <SupporterSection />
 
                 <div className={cn("mt-8 grid items-start gap-6", discordLinked && "lg:grid-cols-[minmax(0,1fr)_17rem]")}>
                     {discordLinked && (
