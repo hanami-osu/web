@@ -21,7 +21,7 @@ const questions = [
     },
     {
         title: "Does supporting affect ranked play?",
-        answer: "Ranked play stays the same for everyone. Additional supporter extras are planned for osu!guessr and Hanami Companion.",
+        answer: "No. Everyone plays by the same rules.",
     },
     {
         title: "Who handles payments and refunds?",

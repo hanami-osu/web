@@ -145,11 +145,7 @@ export default function Profile() {
     return (
         <AccountPage>
             <AccountLayout className={cn(profileLayoutClass, "max-w-280")}>
-                <AccountPageIntro
-                    eyebrow="Hanami account"
-                    title={displayName}
-                    description="Manage your linked accounts, supporter status and bot preferences."
-                />
+                <AccountPageIntro eyebrow="Hanami account" title={displayName} />
 
                 {error && (
                     <p className={cn(formMessageClass, "text-danger")} role="alert">
@@ -181,7 +177,7 @@ export default function Profile() {
                         />
                     )}
 
-                    <AccountPrivacyAside compact={discordLinked} />
+                    <AccountPrivacyAside />
                 </div>
             </AccountLayout>
         </AccountPage>

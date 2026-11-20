@@ -84,15 +84,3 @@ export function ProductFootnote({ children, className }: { children: ReactNode; 
         </aside>
     );
 }
-
-export function ProductSteps({ children }: { children: ReactNode }) {
-    return <ol className="grid gap-4 [counter-reset:step]">{children}</ol>;
-}
-
-export function ProductStep({ children }: { children: ReactNode }) {
-    return (
-        <li className="grid grid-cols-[1.25rem_1fr] gap-3 [counter-increment:step] before:font-display before:font-semibold before:text-accent before:content-[counter(step)] [&_p]:mt-1 [&_p]:text-sm [&_p]:leading-relaxed [&_p]:text-muted [&_strong]:text-sm [&_strong]:font-semibold">
-            <div>{children}</div>
-        </li>
-    );
-}

@@ -246,7 +246,7 @@ export function BotPreferencesSection({ settings, loading, action, saved, onSett
     );
 }
 
-export function AccountPrivacyAside({ compact = false }: { compact?: boolean }) {
+export function AccountPrivacyAside() {
     return (
         <AccountPanel aria-labelledby="account-controls-title">
             <AccountPanelHeader
@@ -254,15 +254,7 @@ export function AccountPrivacyAside({ compact = false }: { compact?: boolean }) 
                 title="Account controls"
                 description="Review your privacy options or permanently delete your Hanami data."
             />
-            <div
-                className={cn(
-                    "flex p-[clamp(1.35rem,3vw,2rem)]",
-                    compact ? "flex-col items-start gap-4" : "flex-wrap items-center justify-between gap-4",
-                )}
-            >
-                <p className="max-w-[52ch] text-[0.84rem] leading-[1.65] text-muted">
-                    Includes account deletion, unlinking, and other privacy requests.
-                </p>
+            <div className="p-[clamp(1.35rem,3vw,2rem)]">
                 <PrefetchLink className={cn(primaryActionClass, secondaryActionClass, compactActionClass)} href={routes.profilePrivacy}>
                     Open privacy settings
                 </PrefetchLink>
