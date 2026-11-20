@@ -198,6 +198,8 @@ function handleStoreFailure(error: unknown, fallbackMessage: string) {
                 return errorResponse(409, "A deletion is already scheduled. Cancel it before choosing again.");
             case "not_scheduled":
                 return errorResponse(404, "No deletion is scheduled for this account.");
+            case "purge_started":
+                return errorResponse(409, "Permanent deletion has already started.");
             case "scope_unavailable":
                 return errorResponse(400, "This account has no data for one of the selected services.");
             case "service_unavailable":
